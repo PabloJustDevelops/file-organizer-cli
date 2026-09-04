@@ -13,7 +13,10 @@ bun.lockb
 # Packages
 packages/*/dist
 packages/*/node_modules
-packages/www/.astro
 
 # Old landing (now in packages/www)
 index.html
+
+# Landing page: local-only, not part of the published repository
+packages/www/
+landing/

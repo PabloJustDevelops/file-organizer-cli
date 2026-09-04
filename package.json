@@ -7,10 +7,8 @@
   "scripts": {
     "dev": "bun run --cwd packages/cli dev",
     "dev:cli": "bun run --cwd packages/cli dev",
-    "dev:www": "bun run --cwd packages/www dev",
-    "build": "bun run --cwd packages/cli build && bun run --cwd packages/www build",
+    "build": "bun run --cwd packages/cli build",
     "build:cli": "bun run --cwd packages/cli build",
-    "build:www": "bun run --cwd packages/www build",
     "test": "bun run --cwd packages/cli test",
     "lint": "bun run --cwd packages/cli lint",
     "prepublishOnly": "bun run --cwd packages/cli build"
