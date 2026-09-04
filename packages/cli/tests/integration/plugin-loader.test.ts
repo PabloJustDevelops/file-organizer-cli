@@ -1,7 +1,7 @@
 import { describe, it, expect, afterAll } from 'vitest';
 import fs from 'fs-extra';
-import os from 'os';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import {
   PluginRegistry,
@@ -10,6 +10,22 @@ import {
 import { Organizer } from '../../src/core/organizer.js';
 import { loadConfig } from '../../src/config/loader.js';
 import type { OrganizerPlugin } from '../../src/core/plugins/contract.js';
+
+/**
+ * Plugin fixtures are loaded through the REAL ESM loader. Under vitest that
+ * goes through vite-node, which cannot resolve the 8.3 short paths of GitHub
+ * runners' os.tmpdir() (C:\Users\RUNNER~1\...) — so fixture dirs live in a
+ * project-local, gitignored base instead of the system temp dir.
+ */
+const tempBase = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..'
+);
+const mkdtempRealSync = (prefix: string): string => {
+  fs.mkdirSync(tempBase, { recursive: true });
+  return fs.realpathSync(fs.mkdtempSync(path.join(tempBase, prefix)));
+};
 
 const fixturePlugin: OrganizerPlugin = {
   name: 'real-fixture-plugin',
@@ -23,9 +39,7 @@ const fixturePlugin: OrganizerPlugin = {
 };
 
 describe('PluginRegistry (integration, real fs + import)', () => {
-  const tempDir = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'fo-plugin-loader-'))
-  );
+  const tempDir = mkdtempRealSync('fo-plugin-loader-');
 
   afterAll(() => {
     fs.removeSync(tempDir);
@@ -91,9 +105,6 @@ describe('PluginRegistry (integration, real fs + import)', () => {
     let configDir: string;
     let sourceDir: string;
     let historyDir: string;
-
-    const mkdtempRealSync = (prefix: string): string =>
-      fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
 
     const yamlWith = (plugins: string[]): string =>
       [

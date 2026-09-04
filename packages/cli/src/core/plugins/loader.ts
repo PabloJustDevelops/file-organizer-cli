@@ -107,14 +107,7 @@ function defaultResolvePackage(name: string, baseDir: string): string {
 }
 
 async function defaultImportModule(modulePath: string): Promise<unknown> {
-  // Escape any test-runner module graph (vite-node intercepts dynamic import
-  // and fails to resolve temp-dir file URLs on Windows CI). `new Function`
-  // compiles the import outside the module scope, forcing the REAL Node ESM
-  // loader — which is exactly the production contract for plugin loading.
-  const dynamicImport = new Function('specifier', 'return import(specifier)') as (
-    specifier: string
-  ) => Promise<unknown>;
-  return dynamicImport(pathToFileURL(modulePath).href);
+  return import(pathToFileURL(modulePath).href);
 }
 
 /**

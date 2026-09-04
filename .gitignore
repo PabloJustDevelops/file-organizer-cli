@@ -20,3 +20,6 @@ index.html
 # Landing page: local-only, not part of the published repository
 packages/www/
 landing/
+
+# Integration-test fixture dirs (plugin modules loaded via real ESM import)
+.tmp-test/
