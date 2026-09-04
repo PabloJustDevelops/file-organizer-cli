@@ -1,0 +1,23 @@
+rules:
+  - name: Images
+    patterns:
+      - "*.jpg"
+      - "*.jpeg"
+      - "*.png"
+      - "*.gif"
+      - "*.webp"
+    destination: ./images/{year}/{month}
+  - name: Documents
+    patterns:
+      - "*.pdf"
+      - "*.docx"
+      - "*.xlsx"
+      - "*.txt"
+    destination: ./documents/{type}
+  - name: Videos
+    patterns:
+      - "*.mp4"
+      - "*.avi"
+      - "*.mkv"
+      - "*.mov"
+    destination: ./videos/{year}

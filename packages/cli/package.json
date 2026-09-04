@@ -1,0 +1,62 @@
+{
+  "name": "file-organizer-cli",
+  "version": "0.1.0",
+  "description": "CLI tool to automatically organize files based on configurable rules",
+  "type": "module",
+  "main": "dist/cli/index.js",
+  "bin": {
+    "fo": "dist/cli/index.js",
+    "file-organizer": "dist/cli/index.js",
+    "fo-tui": "dist/tui/index.js"
+  },
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "oxlint && tsc --noEmit",
+    "lint:oxlint": "oxlint",
+    "prepublishOnly": "bun run build && bun test"
+  },
+  "keywords": [
+    "cli",
+    "file-organizer",
+    "automation",
+    "file-management",
+    "duplicate-finder"
+  ],
+  "author": "Pablo",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "chalk": "^5.3.0",
+    "chokidar": "^3.6.0",
+    "commander": "^12.0.0",
+    "conf": "^12.0.0",
+    "figures": "^6.1.0",
+    "fs-extra": "^11.2.0",
+    "ink": "^7.1.1",
+    "inquirer": "^9.2.0",
+    "ora": "^8.0.0",
+    "yaml": "^2.4.0"
+  },
+  "devDependencies": {
+    "@oxlint/plugins": "^1.81.0",
+    "@types/fs-extra": "^11.0.0",
+    "@types/inquirer": "^9.0.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.2.18",
+    "@vitest/coverage-v8": "^1.6.1",
+    "memfs": "^4.0.0",
+    "oxlint": "^1.81.0",
+    "tsup": "^8.5.1",
+    "vitest": "^1.6.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist"
+  ]
+}

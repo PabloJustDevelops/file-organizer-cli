@@ -1,0 +1,101 @@
+# Developer Projects Configuration
+# Organizes files commonly found in development projects
+
+rules:
+  # Node.js
+  - name: Node Modules Artifacts
+    patterns:
+      - "package.json"
+      - "package-lock.json"
+      - "yarn.lock"
+      - "pnpm-lock.yaml"
+    destination: "./node"
+
+  # Build outputs
+  - name: Build Outputs
+    patterns:
+      - "*.min.js"
+      - "*.min.css"
+      - "*.bundle.js"
+      - "*.chunk.js"
+    destination: "./build"
+
+  # Source maps
+  - name: Source Maps
+    patterns:
+      - "*.map"
+    destination: "./maps"
+
+  # Config files
+  - name: Config Files
+    patterns:
+      - ".env*"
+      - "*.config.js"
+      - "*.config.ts"
+      - "*.config.json"
+      - ".eslintrc*"
+      - ".prettierrc*"
+      - "tsconfig*.json"
+      - "vite.config.*"
+      - "webpack.config.*"
+    destination: "./config"
+
+  # Documentation
+  - name: Documentation
+    patterns:
+      - "README*"
+      - "CHANGELOG*"
+      - "LICENSE*"
+      - "*.md"
+      - "*.mdx"
+    destination: "./docs"
+
+  # Tests
+  - name: Test Files
+    patterns:
+      - "*.test.*"
+      - "*.spec.*"
+      - "__tests__"
+    destination: "./tests"
+
+  # Docker
+  - name: Docker Files
+    patterns:
+      - "Dockerfile*"
+      - "docker-compose*"
+      - ".dockerignore"
+    destination: "./docker"
+
+  # Git
+  - name: Git Files
+    patterns:
+      - ".gitignore"
+      - ".gitattributes"
+      - ".gitmodules"
+    destination: "./git"
+
+  # CI/CD
+  - name: CI Configs
+    patterns:
+      - ".github"
+      - ".gitlab-ci.yml"
+      - "Jenkinsfile"
+      - ".circleci"
+    destination: "./ci"
+
+  # Assets
+  - name: Static Assets
+    patterns:
+      - "*.ico"
+      - "*.png"
+      - "*.jpg"
+      - "*.svg"
+      - "*.woff"
+      - "*.woff2"
+      - "*.ttf"
+      - "*.eot"
+    destination: "./assets"
+
+conflictResolution: rename
+recursive: true
+includeHidden: true

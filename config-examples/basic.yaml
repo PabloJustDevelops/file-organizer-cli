@@ -1,0 +1,56 @@
+# Basic File Organizer Configuration
+# Place this file as .file-organizer.yaml in your target directory
+
+rules:
+  # Images organized by date
+  - name: Images
+    patterns:
+      - "*.jpg"
+      - "*.jpeg"
+      - "*.png"
+      - "*.gif"
+      - "*.webp"
+      - "*.svg"
+    destination: "./images/{year}/{month}"
+
+  # Documents organized by type
+  - name: Documents
+    patterns:
+      - "*.pdf"
+      - "*.docx"
+      - "*.xlsx"
+      - "*.pptx"
+      - "*.txt"
+      - "*.md"
+    destination: "./documents/{type}"
+
+  # Videos
+  - name: Videos
+    patterns:
+      - "*.mp4"
+      - "*.avi"
+      - "*.mkv"
+      - "*.mov"
+    destination: "./videos/{year}"
+
+  # Audio files
+  - name: Audio
+    patterns:
+      - "*.mp3"
+      - "*.wav"
+      - "*.flac"
+      - "*.aac"
+    destination: "./audio"
+
+  # Archives
+  - name: Archives
+    patterns:
+      - "*.zip"
+      - "*.rar"
+      - "*.7z"
+      - "*.tar"
+      - "*.gz"
+    destination: "./archives/{year-month}"
+
+# Conflict resolution: rename | overwrite | skip | newest
+conflictResolution: rename

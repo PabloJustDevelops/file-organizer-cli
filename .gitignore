@@ -1,0 +1,19 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.vscode/
+.idea/
+*.tsbuildinfo
+
+# Bun
+bun.lockb
+
+# Packages
+packages/*/dist
+packages/*/node_modules
+packages/www/.astro
+
+# Old landing (now in packages/www)
+index.html

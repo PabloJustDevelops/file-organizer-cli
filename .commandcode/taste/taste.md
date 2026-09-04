@@ -1,0 +1,13 @@
+- Prefers asymmetric hero layouts over generic centered heroes. Confidence: 0.85
+- Uses terminal previews / real product output as proof objects rather than generic hero imagery. Confidence: 0.9
+- Favors deep forest green accent (oklch 0.42 0.08 145) over generic indigo/violet tech colors. Confidence: 0.85
+- Prefers single font family with weight contrast (e.g., Geist + Geist Mono) over trendy multi-font pairings. Confidence: 0.85
+- Designs layouts that are evidence-led, showcasing real product behavior (e.g., dry-run terminal output). Confidence: 0.9
+- Presents features as editorial grids rather than icon cards. Confidence: 0.85
+- Communicates in Spanish. Confidence: 0.95
+- Prefers brief, informal commands and communication style. Confidence: 0.8
+- Uses `bun` as package manager. Confidence: 0.95
+- Prefers agent to break out of unproductive loops and move forward rather than retrying the same failing action. Confidence: 0.85
+- Values autonomy in testing — prefers giving the agent freedom to explore and verify rather than micromanaging each step. Confidence: 0.8
+- Wants recommendations and rationale before implementation decisions. Confidence: 0.8
+- Works on Windows with PowerShell as the primary shell. Confidence: 0.85

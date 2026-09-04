@@ -1,0 +1,105 @@
+# Advanced File Organizer Configuration
+# Demonstrates all features: priorities, conditions, regex matching
+
+rules:
+  # Screenshots with high priority (matched first)
+  - name: Screenshots
+    patterns:
+      - "*screenshot*"
+      - "*Screen Shot*"
+      - "*Captura*"
+    destination: "./screenshots/{year}/{month}"
+    priority: 20
+    condition:
+      type: regex
+      pattern: "(?i)(screenshot|screen shot|captura)"
+
+  # Project files with regex capture
+  - name: Project Alpha
+    patterns:
+      - "*"
+    destination: "./projects/alpha/{match1}"
+    priority: 15
+    condition:
+      type: regex
+      pattern: "^(alpha|project-a)-"
+
+  - name: Project Beta
+    patterns:
+      - "*"
+    destination: "./projects/beta/{match1}"
+    priority: 15
+    condition:
+      type: regex
+      pattern: "^(beta|project-b)-"
+
+  # Large files (> 10MB)
+  - name: Large Files
+    patterns:
+      - "*"
+    destination: "./large-files/{type}"
+    priority: 12
+    condition:
+      type: size
+      minSize: 10485760
+
+  # Recent files (modified in last 30 days)
+  - name: Recent Downloads
+    patterns:
+      - "*"
+    destination: "./recent/{year-month}"
+    priority: 11
+    condition:
+      type: date
+      after: "2024-01-01"
+
+  # Code files by language
+  - name: JavaScript
+    patterns:
+      - "*.js"
+      - "*.mjs"
+      - "*.cjs"
+    destination: "./code/javascript"
+
+  - name: TypeScript
+    patterns:
+      - "*.ts"
+      - "*.tsx"
+    destination: "./code/typescript"
+
+  - name: Python
+    patterns:
+      - "*.py"
+    destination: "./code/python"
+
+  # Images with format-based organization
+  - name: RAW Photos
+    patterns:
+      - "*.raw"
+      - "*.cr2"
+      - "*.nef"
+      - "*.arw"
+    destination: "./photos/raw/{year}"
+
+  - name: Processed Photos
+    patterns:
+      - "*.jpg"
+      - "*.jpeg"
+      - "*.png"
+    destination: "./photos/processed/{year}/{month}"
+
+  # Default rule for unmatched files (lowest priority)
+  - name: Other Files
+    patterns:
+      - "*"
+    destination: "./other/{type}"
+    priority: 0
+
+# How to handle files that already exist at destination
+conflictResolution: rename
+
+# Scan subdirectories
+recursive: false
+
+# Include hidden files (starting with .)
+includeHidden: false
