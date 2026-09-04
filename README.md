@@ -1,5 +1,7 @@
 # file-organizer-cli
 
+[![CI](https://github.com/PabloJustDevelops/file-organizer-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/PabloJustDevelops/file-organizer-cli/actions/workflows/ci.yml)
+
 Rule-based file organization from the terminal. Define patterns in YAML — `fo` does the rest.
 
 ## Features
@@ -11,6 +13,7 @@ Rule-based file organization from the terminal. Define patterns in YAML — `fo`
 - **Undo** — Revert the last operation (persists between sessions)
 - **Conflict handling** — `rename`, `overwrite`, `skip`, or `newest`
 - **Conditions** — Filter by size, date, regex, or extension
+- **Plugins** — Hooks, custom rules, and file transforms, with error isolation
 - **TUI** — Interactive terminal interface for organizing files
 
 ## Installation
@@ -125,15 +128,58 @@ Invalid tags are rejected by `fo config validate`.
 | `skip` | Leaves conflicting files in place |
 | `newest` | Keeps the most recently modified |
 
+## Plugins
+
+Extend `fo` with your own JavaScript — a plugin is a plain object with a
+default export (no imports required):
+
+```javascript
+// my-plugin.js
+export default {
+  name: 'my-plugin',
+  version: '1.0.0',
+
+  // Lifecycle hooks
+  async beforeOrganize(context) {
+    console.log(`Organizing ${context.files.length} files...`);
+  },
+  async afterOrganize(context) {
+    console.log(`Moved ${context.results.moved.length} files!`);
+  },
+
+  // Extra matching rules (validated like YAML rules)
+  customRules() {
+    return [{ name: 'Logs', patterns: ['*.log'], destination: './logs' }];
+  },
+
+  // Decision-layer transform (e.g. remap extensions so rules route them)
+  async transform(file) {
+    return { ...file, extension: file.extension === 'log' ? 'txt' : file.extension };
+  },
+};
+```
+
+Register it in your config and it loads before any file is touched:
+
+```yaml
+plugins:
+  - ./my-plugin.js                 # local path, relative to this config
+  - file-organizer-compress        # npm package
+```
+
+A failing plugin never aborts a run: hook, rule, and transform errors are
+captured per item and reported in the result (`pluginErrors`). Full guide
+with the complete API, semantics, and publishing steps:
+**[docs/PLUGINS.md](docs/PLUGINS.md)**.
+
 ## Project Structure
 
 ```
 packages/
-├── cli/          # The CLI tool
-│   ├── src/      # Source code
-│   ├── dist/     # Build output
-│   └── tests/    # Unit tests
-└── www/          # Landing page (Astro)
+└── cli/          # The CLI tool
+    ├── src/      # Source code
+    ├── dist/     # Build output
+    └── tests/    # Unit & integration tests
 ```
 
 ## Development
@@ -142,16 +188,13 @@ packages/
 # Install
 bun install
 
-# Run tests
-bun test
+# Run tests (vitest)
+bun run test
 
 # Build CLI
 bun run build:cli
 
-# Build landing
-bun run build:www
-
-# Lint
+# Lint (oxlint + typecheck)
 bun run lint
 ```
 
@@ -165,7 +208,7 @@ How this project is built — read before adding a feature:
 | [`docs/specs/`](docs/specs/) | Feature specs with testable acceptance criteria · [template](docs/specs/TEMPLATE.md) |
 | [`docs/decisions/`](docs/decisions/) | Architecture Decision Records — how and why, immutable once accepted |
 | [`docs/RULES.md`](docs/RULES.md) | Rules engine & config reference |
-| [`docs/PLUGINS.md`](docs/PLUGINS.md) | Plugin system — ⚠️ *Planned, not yet implemented* |
+| [`docs/PLUGINS.md`](docs/PLUGINS.md) | Plugin system — hooks, rules, transforms, publishing |
 
 Workflow for user-facing behavior: **spec (`docs/specs/<feature>.md`) → plan → tasks → implement → tests linked from the spec's acceptance criteria.**
 
