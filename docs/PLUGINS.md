@@ -15,11 +15,11 @@ File Organizer CLI supports plugins to extend functionality. Plugins can:
 - Transform file metadata before organizing decisions
 - Hook into the organization lifecycle
 
-**A plugin is a plain object with a default export — no imports required.**
-Previous versions of this guide showed `import type { OrganizerPlugin } from
-'file-organizer-cli'`; that import never worked (the package entry point is
-the CLI binary) and has been removed. TypeScript users get full typing
-without any runtime import by declaring the shape inline (see below).
+**A plugin is a plain object with a default export.** For TypeScript users,
+`import type { OrganizerPlugin } from 'file-organizer-cli'` now works via the
+package's library entry (an earlier version of this guide showed an import
+that didn't resolve anywhere — the package entry used to be the CLI binary;
+it is now a dedicated side-effect-free library module).
 
 ## Plugin Interface
 
@@ -87,21 +87,22 @@ export default {
 };
 ```
 
-TypeScript users can type the plugin without importing anything:
+TypeScript users can type the plugin with the real contract type:
 
 ```typescript
 // my-plugin.ts
-interface MyPlugin {
-  name: string;
-  version: string;
-  beforeOrganize?(context: { files: unknown[] }): Promise<void>;
-  // ...narrow further as needed
-}
+import type { OrganizerPlugin } from 'file-organizer-cli';
 
 export default {
   name: 'my-plugin',
   version: '1.0.0',
-} satisfies MyPlugin;
+  async transform(file) {
+    return {
+      ...file,
+      extension: file.extension === 'log' ? 'txt' : file.extension,
+    };
+  },
+} satisfies OrganizerPlugin;
 ```
 
 ## Registering a Plugin
@@ -125,10 +126,25 @@ plugins:
 
 ### Programmatically
 
-`Organizer` exposes `loadPlugin(plugin)` and `loadSpec('./my-plugin.js')`.
-Note: the published package currently ships only the CLI binary entry —
-programmatic loading works when importing from the source/monorepo, and a
-dedicated library export is a planned follow-up.
+```typescript
+import { Organizer } from 'file-organizer-cli';
+import myPlugin from './my-plugin.js';
+
+const organizer = new Organizer();
+organizer.loadPlugin(myPlugin); // validates + registers
+
+// Or load from a local path / npm package:
+await organizer.loadSpec('./my-plugin.js', { baseDir: process.cwd() });
+
+const result = await organizer.organize('./downloads', {
+  rules: [{ name: 'Images', patterns: ['*.jpg'], destination: './images' }],
+});
+console.log(result.moved);
+```
+
+The package root is a side-effect-free library entry: importing it never
+starts the CLI. The binary lives at `file-organizer-cli/bin` (and the usual
+`fo` / `file-organizer` commands from a global or `npx` install).
 
 ## Execution semantics
 

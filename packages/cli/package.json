@@ -3,7 +3,16 @@
   "version": "0.1.0",
   "description": "CLI tool to automatically organize files based on configurable rules",
   "type": "module",
-  "main": "dist/cli/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./bin": "./dist/cli/index.js",
+    "./package.json": "./package.json"
+  },
   "bin": {
     "fo": "dist/cli/index.js",
     "file-organizer": "dist/cli/index.js",
