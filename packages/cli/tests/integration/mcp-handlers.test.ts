@@ -161,8 +161,11 @@ describe('MCP tool handlers — config parity', () => {
   };
 
   beforeEach(async () => {
-    testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'fo-mcp-parity-'));
-    historyDir = await fs.mkdtemp(path.join(os.tmpdir(), 'fo-mcp-parity-h-'));
+    // realpath: GitHub's Windows runner has an 8.3 short os.tmpdir()
+    // (C:\Users\RUNNER~1\...), which the ESM loader cannot import a plugin from.
+    // Same guard as tests/integration/plugin-loader.test.ts.
+    testDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'fo-mcp-parity-')));
+    historyDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'fo-mcp-parity-h-')));
     configPath = path.join(testDir, '.file-organizer.yaml');
   });
 
