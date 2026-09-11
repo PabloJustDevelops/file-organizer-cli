@@ -96,4 +96,17 @@ describe('HistoryStore', () => {
     const loaded = await store.load();
     expect(loaded).toHaveLength(1);
   });
+
+  it('AC-11: moveToBackup moves the file and preserves the extension', async () => {
+    const store = makeStore();
+    const source = path.join(tempDir, 'duplicate.txt');
+    await fs.writeFile(source, 'data');
+
+    const backupPath = await store.moveToBackup(source);
+
+    expect(await fs.pathExists(source)).toBe(false);
+    expect(backupPath).toContain('dedup');
+    expect(path.extname(backupPath)).toBe('.txt');
+    expect(await fs.readFile(backupPath, 'utf-8')).toBe('data');
+  });
 });

@@ -406,6 +406,28 @@ export class Organizer {
     await this.historyStore.clear();
   }
 
+  /** Move one file into the undoable backup store; returns the backup path. */
+  async backupForRemoval(originalPath: string): Promise<string> {
+    return this.historyStore.moveToBackup(originalPath);
+  }
+
+  /**
+   * Persist an undo entry for files this organizer did not move itself (e.g.
+   * `dedup --delete`). Each removal is recorded as a move
+   * `from: original, to: backup`, which `undo()` restores by moving the backup
+   * back to the original location. Respects `historySize`.
+   */
+  async recordRemovals(removals: MovedFile[]): Promise<void> {
+    if (removals.length === 0) return;
+    await this.ensureInitialized();
+    this.addToHistory({
+      id: crypto.randomUUID(),
+      timestamp: new Date(),
+      operations: removals,
+    });
+    await this.historyStore.save(this.history);
+  }
+
   getHistoryFilePath(): string {
     return this.historyStore.getFilePath();
   }

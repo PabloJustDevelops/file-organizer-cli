@@ -102,6 +102,22 @@ export class HistoryStore {
     await fs.remove(backupPath);
   }
 
+  /**
+   * Move a file into the backup store for an undoable deletion (`dedup
+   * --delete`). Unlike `backupReplacedFile` this MOVES — the file is being
+   * removed, so a copy would just duplicate space. Returns the backup path,
+   * which `undo` restores by moving it back to the original location.
+   */
+  async moveToBackup(originalPath: string): Promise<string> {
+    const dir = path.join(path.dirname(this.historyFile), 'dedup');
+    await fs.ensureDir(dir);
+    const id = crypto.randomUUID();
+    const ext = path.extname(originalPath);
+    const backupPath = path.join(dir, `${id}${ext}`);
+    await fs.move(originalPath, backupPath, { overwrite: false });
+    return backupPath;
+  }
+
   async save(entries: UndoEntry[]): Promise<void> {
     this.cache = [...entries];
     this.loaded = true;

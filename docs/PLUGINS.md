@@ -16,7 +16,7 @@ File Organizer CLI supports plugins to extend functionality. Plugins can:
 - Hook into the organization lifecycle
 
 **A plugin is a plain object with a default export.** For TypeScript users,
-`import type { OrganizerPlugin } from 'file-organizer-cli'` now works via the
+`import type { OrganizerPlugin } from '@pablojustdevelops/file-organizer-cli'` now works via the
 package's library entry (an earlier version of this guide showed an import
 that didn't resolve anywhere — the package entry used to be the CLI binary;
 it is now a dedicated side-effect-free library module).
@@ -91,7 +91,7 @@ TypeScript users can type the plugin with the real contract type:
 
 ```typescript
 // my-plugin.ts
-import type { OrganizerPlugin } from 'file-organizer-cli';
+import type { OrganizerPlugin } from '@pablojustdevelops/file-organizer-cli';
 
 export default {
   name: 'my-plugin',
@@ -127,7 +127,7 @@ plugins:
 ### Programmatically
 
 ```typescript
-import { Organizer } from 'file-organizer-cli';
+import { Organizer } from '@pablojustdevelops/file-organizer-cli';
 import myPlugin from './my-plugin.js';
 
 const organizer = new Organizer();
@@ -143,8 +143,8 @@ console.log(result.moved);
 ```
 
 The package root is a side-effect-free library entry: importing it never
-starts the CLI. The binary lives at `file-organizer-cli/bin` (and the usual
-`fo` / `file-organizer` commands from a global or `npx` install).
+starts the CLI. The binary lives at `@pablojustdevelops/file-organizer-cli/bin`
+(and the usual `fo` / `file-organizer` commands from a global or `npx` install).
 
 ## Execution semantics
 

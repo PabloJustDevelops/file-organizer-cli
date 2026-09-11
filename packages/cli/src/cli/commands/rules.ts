@@ -2,8 +2,8 @@ import { Command } from 'commander';
 import path from 'path';
 import { Organizer } from '../../core/organizer.js';
 import { loadConfig, saveConfig, findConfigPath } from '../../config/loader.js';
-import { logger } from '../../utils/logger.js';
-import { printRules } from '../ui/output.js';
+import { logger, setLogLevel } from '../../utils/logger.js';
+import { fail, printJson, printRules } from '../ui/output.js';
 import { promptForRule, selectRule } from '../ui/prompts.js';
 
 export const rulesCommand = new Command('rules')
@@ -14,7 +14,10 @@ rulesCommand
   .alias('ls')
   .description('List all rules')
   .option('-c, --config <path>', 'Path to config file')
+  .option('--json', 'Output machine-readable JSON', false)
   .action(async (options) => {
+    const json = options.json === true;
+    if (json) setLogLevel('error');
     try {
       let configPath = options.config;
 
@@ -23,15 +26,19 @@ rulesCommand
       }
 
       if (!configPath) {
-        logger.warn('No config file found. Use "fo init" to create one.');
+        fail('No config file found. Use "fo init" to create one.', json);
         return;
       }
 
       const config = await loadConfig(configPath);
-      printRules(config.rules);
+      if (json) {
+        printJson(config.rules);
+      } else {
+        printRules(config.rules);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error(`Failed to list rules: ${message}`);
+      fail(`Failed to list rules: ${message}`, json);
     }
   });
 
@@ -49,7 +56,7 @@ rulesCommand
       }
 
       if (!configPath) {
-        logger.warn('No config file found. Use "fo init" to create one.');
+        fail('No config file found. Use "fo init" to create one.');
         return;
       }
 
@@ -68,7 +75,7 @@ rulesCommand
       logger.success(`Rule "${newRule.name}" added successfully`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error(`Failed to add rule: ${message}`);
+      fail(`Failed to add rule: ${message}`);
     }
   });
 
@@ -86,7 +93,7 @@ rulesCommand
       }
 
       if (!configPath) {
-        logger.warn('No config file found. Use "fo init" to create one.');
+        fail('No config file found. Use "fo init" to create one.');
         return;
       }
 
@@ -113,7 +120,7 @@ rulesCommand
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error(`Failed to remove rule: ${message}`);
+      fail(`Failed to remove rule: ${message}`);
     }
   });
 
@@ -132,7 +139,7 @@ rulesCommand
       }
 
       if (!configPath) {
-        logger.warn('No config file found. Use "fo init" to create one.');
+        fail('No config file found. Use "fo init" to create one.');
         return;
       }
 
@@ -149,6 +156,6 @@ rulesCommand
       printOrganizeResult(result, true);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error(`Test failed: ${message}`);
+      fail(`Test failed: ${message}`);
     }
   });

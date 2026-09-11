@@ -9,6 +9,12 @@ export interface ScanOptions {
   recursive?: boolean;
   includeHidden?: boolean;
   extensions?: string[];
+  /**
+   * Absolute directories to skip entirely. Watch mode uses this to keep its own
+   * destination folders out of the scan — ignoring chokidar events alone is not
+   * enough, because the periodic scan would still see (and re-match) them.
+   */
+  excludeDirs?: string[];
 }
 
 export class FileScanner {
@@ -21,6 +27,7 @@ export class FileScanner {
       recursive = false,
       includeHidden = false,
       extensions,
+      excludeDirs,
     } = options;
 
     logger.debug(`Scanning directory: ${directory}`);
@@ -32,6 +39,16 @@ export class FileScanner {
       filePaths = await listFiles(directory, true, includeHidden);
     } else {
       filePaths = await listFiles(directory, false, includeHidden);
+    }
+
+    if (excludeDirs && excludeDirs.length > 0) {
+      const roots = excludeDirs.map((dir) => path.resolve(dir));
+      filePaths = filePaths.filter(
+        (file) =>
+          !roots.some(
+            (root) => file === root || file.startsWith(root + path.sep)
+          )
+      );
     }
 
     if (extensions && extensions.length > 0) {

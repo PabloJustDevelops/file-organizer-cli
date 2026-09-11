@@ -1,6 +1,27 @@
 import chalk from 'chalk';
 import type { OrganizeResult, Rule, UndoEntry } from '../../types/index.js';
 import { formatFileSize } from '../../utils/file-utils.js';
+import { logger } from '../../utils/logger.js';
+
+/**
+ * Report a failed command and make it observable to scripts. Sets
+ * `process.exitCode = 1` rather than calling `process.exit`, so stdout/stderr
+ * flush and pending cleanup runs before the process exits naturally with code 1
+ * (SPEC-cli-contract). In JSON mode the error also goes to stdout as
+ * `{ "error": … }` so automation can parse it.
+ */
+export function fail(message: string, json = false): void {
+  if (json) {
+    process.stdout.write(`${JSON.stringify({ error: message }, null, 2)}\n`);
+  }
+  logger.error(message);
+  process.exitCode = 1;
+}
+
+/** Machine-readable output: plain JSON on stdout, never colorized. */
+export function printJson<T>(value: T): void {
+  process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
+}
 
 export function printOrganizeResult(result: OrganizeResult, dryRun = false): void {
   const prefix = dryRun ? chalk.yellow('[DRY RUN] ') : '';

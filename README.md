@@ -16,20 +16,30 @@ Rule-based file organization from the terminal. Define patterns in YAML — `fo`
 - **Plugins** — Hooks, custom rules, and file transforms, with error isolation
 - **TUI** — Interactive terminal interface for organizing files
 
+## Requirements
+
+- **Node.js >= 18** (20 LTS recommended). This installs the `fo`,
+  `file-organizer`, and `fo-tui` binaries.
+
 ## Installation
 
 ```bash
-# Clone
-git clone <repo-url>
+npm install -g @pablojustdevelops/file-organizer-cli
+```
+
+Or run it without installing:
+
+```bash
+npx @pablojustdevelops/file-organizer-cli --help
+```
+
+**From source (development):**
+
+```bash
+git clone https://github.com/PabloJustDevelops/file-organizer-cli
 cd file-organizer-cli
-
-# Install dependencies
 bun install
-
-# Build CLI
 bun run build:cli
-
-# Link globally
 bun install -g ./packages/cli
 ```
 
@@ -63,7 +73,40 @@ fo watch ~/Downloads
 | `fo config init` | Create a config file |
 | `fo config show` | Display current config |
 | `fo config validate` | Validate config syntax |
+| `fo dedup [source]` | Find duplicates; `--delete` moves them to a restorable backup |
 | `fo-tui [source]` | Open interactive TUI |
+
+### Interactive TUI
+
+`fo-tui` needs a terminal with raw-mode support. On Windows use Windows
+Terminal, Git Bash, or WSL — classic PowerShell and CMD are not supported; use
+`fo organize` there instead.
+
+### Machine-readable output
+
+`organize`, `rules list`, and `config show` accept `--json`:
+
+```bash
+fo organize ~/Downloads --dry-run --json | jq '.moved | length'
+fo rules list --json
+fo config show --json
+```
+
+In `--json` mode stdout carries **only** the JSON payload (logs go to stderr)
+and the command never prompts. Exit codes are `0` on success and `1` on any
+failure, including a missing or invalid config.
+
+### Watch mode
+
+`fo watch` organizes what is already in the folder when it starts (disable with
+`--no-initial`), then re-runs as files arrive. `--debounce <ms>` controls the
+settle window. Destination folders are excluded from both events and scans, so
+custom destinations never make the watcher fight its own moves.
+
+### Removing duplicates
+
+`fo dedup --delete` does not really delete: duplicates move to a backup and are
+recorded in history, so `fo undo` restores them.
 
 ## Configuration
 
@@ -179,8 +222,22 @@ packages/
 └── cli/          # The CLI tool
     ├── src/      # Source code
     ├── dist/     # Build output
-    └── tests/    # Unit & integration tests
+    └── tests/    # Unit, integration & e2e tests
 ```
+
+## Troubleshooting
+
+- **`No config file found` (exit 1)** — run `fo config init` in the directory you
+  want to organize, or pass `-c <path>`.
+- **`Invalid configuration: …`** — `fo config validate` names the offending rule
+  and field.
+- **Unknown template variable warnings** — a token like `{quartal}` is left
+  literal; see [`docs/RULES.md`](docs/RULES.md) for the supported variables.
+- **Watch behaves unexpectedly** — `--debounce <ms>` sets the settle window,
+  `--no-initial` skips the initial pass, and destination folders are never
+  re-scanned.
+- **A command failed but printed nothing useful** — a non-zero exit code means it
+  did not do what you asked; `--json` prints `{ "error": … }` for scripts.
 
 ## Development
 

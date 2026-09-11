@@ -3,9 +3,12 @@ import path from 'path';
 import crypto from 'crypto';
 import fs from 'fs-extra';
 import { FileScanner } from '../../core/file-scanner.js';
+import { Organizer } from '../../core/organizer.js';
+import type { MovedFile } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 import { formatFileSize } from '../../utils/file-utils.js';
 import { confirmAction } from '../ui/prompts.js';
+import { fail } from '../ui/output.js';
 import chalk from 'chalk';
 
 interface DuplicateGroup {
@@ -62,10 +65,11 @@ async function findDuplicates(
 }
 
 export const dedupCommand = new Command('dedup')
-  .description('Find (and optionally delete) duplicate files by content hash')
+  .description('Find duplicates, and optionally remove them to a restorable backup')
   .argument('[source]', 'Source directory', '.')
   .option('-r, --recursive', 'Scan subdirectories', false)
-  .option('--delete', 'Delete duplicates (keeps newest of each group)', false)
+  .option('--delete', 'Move duplicates to backup (keeps newest of each group)', false)
+  .option('-y, --yes', 'Skip confirmation prompt', false)
   .action(async (source: string, options) => {
     try {
       const sourceDir = path.resolve(source);
@@ -109,28 +113,43 @@ export const dedupCommand = new Command('dedup')
         }
       }
 
-      const confirmed = await confirmAction(
-        `Delete ${toDelete.length} duplicate file(s)? This cannot be undone.`
-      );
-      if (!confirmed) {
-        logger.info('Aborted — nothing deleted.');
-        return;
-      }
-
-      let deleted = 0;
-      for (const file of toDelete) {
-        try {
-          await fs.remove(file);
-          deleted++;
-        } catch (err) {
-          const message = err instanceof Error ? err.message : 'Unknown error';
-          logger.error(`Could not delete ${file}: ${message}`);
+      if (!options.yes) {
+        const confirmed = await confirmAction(
+          `Move ${toDelete.length} duplicate file(s) to backup? Restore with "fo undo".`
+        );
+        if (!confirmed) {
+          logger.info('Aborted — nothing moved.');
+          return;
         }
       }
-      logger.success(`Deleted ${deleted} duplicate file(s).`);
+
+      // Deletions are undoable: each duplicate moves into the history backup
+      // store and is recorded as an undo entry (`from: original, to: backup`),
+      // so `fo undo` restores it like any organize operation.
+      const organizer = new Organizer();
+      const operations: MovedFile[] = [];
+      for (const file of toDelete) {
+        try {
+          const backupPath = await organizer.backupForRemoval(file);
+          operations.push({ from: file, to: backupPath, rule: 'dedup' });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          logger.error(`Could not remove ${file}: ${message}`);
+        }
+      }
+      await organizer.recordRemovals(operations);
+
+      const failures = toDelete.length - operations.length;
+      if (operations.length > 0) {
+        logger.success(
+          `Moved ${operations.length} duplicate file(s) to backup. Run "fo undo" to restore.`
+        );
+      }
+      if (failures > 0) {
+        fail(`Dedup finished with ${failures} file(s) that could not be removed.`);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error(`Dedup failed: ${message}`);
-      process.exit(1);
+      fail(`Dedup failed: ${message}`);
     }
   });
