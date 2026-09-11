@@ -5,6 +5,20 @@ import os from 'os';
 import yaml from 'yaml';
 import { handleToolCall } from '../../src/mcp/server.js';
 import { validateAndNormalizeConfig } from '../../src/config/loader.js';
+import { fileURLToPath } from 'url';
+
+/**
+ * Plugin fixtures go through the REAL ESM loader, and vite-node cannot resolve
+ * the 8.3 short paths of GitHub runners' `os.tmpdir()` (`C:\Users\RUNNER~1\...`)
+ * — `realpathSync` on that runner still returns the short form. So fixture dirs
+ * live in a project-local base instead, mirroring
+ * `tests/integration/plugin-loader.test.ts`.
+ */
+const repoLocalBase = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const mkdtempRealSync = (prefix: string): string => {
+  fs.mkdirSync(repoLocalBase, { recursive: true });
+  return fs.realpathSync(fs.mkdtempSync(path.join(repoLocalBase, prefix)));
+};
 
 describe('MCP tool handlers', () => {
   let testDir: string;
@@ -161,11 +175,8 @@ describe('MCP tool handlers — config parity', () => {
   };
 
   beforeEach(async () => {
-    // realpath: GitHub's Windows runner has an 8.3 short os.tmpdir()
-    // (C:\Users\RUNNER~1\...), which the ESM loader cannot import a plugin from.
-    // Same guard as tests/integration/plugin-loader.test.ts.
-    testDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'fo-mcp-parity-')));
-    historyDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'fo-mcp-parity-h-')));
+    testDir = mkdtempRealSync('fo-mcp-parity-');
+    historyDir = mkdtempRealSync('fo-mcp-parity-h-');
     configPath = path.join(testDir, '.file-organizer.yaml');
   });
 
