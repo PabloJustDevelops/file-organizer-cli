@@ -1,8 +1,5 @@
 import { Command } from 'commander';
 import path from 'path';
-import React from 'react';
-import { render } from 'ink';
-import { App } from '../../tui/App.js';
 import { logger } from '../../utils/logger.js';
 
 function isWindowsTerminal(): boolean {
@@ -45,5 +42,18 @@ export const tuiCommand = new Command('tui')
       process.exit(1);
     }
 
-    render(React.createElement(App, { source: sourceDir, configPath: options.config }));
+    // Loaded lazily: the TUI stack (react + ink) must not be pulled in by the
+    // CLI entry, so `fo <command>` works on installs without those deps.
+    const [{ render }, reactModule, { App }] = await Promise.all([
+      import('ink'),
+      import('react'),
+      import('../../tui/App.js'),
+    ]);
+
+    render(
+      reactModule.default.createElement(App, {
+        source: sourceDir,
+        configPath: options.config,
+      })
+    );
   });

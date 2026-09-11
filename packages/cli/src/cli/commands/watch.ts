@@ -4,6 +4,21 @@ import { Organizer } from '../../core/organizer.js';
 import { FolderWatcher } from '../../core/watcher.js';
 import { loadConfig, findConfigPath, loadAppConfig } from '../../config/loader.js';
 import { logger } from '../../utils/logger.js';
+import { fail } from '../ui/output.js';
+
+/**
+ * Parse and validate the `--debounce` flag. Returns a positive integer of
+ * milliseconds, or throws — the watcher must never silently ignore the value.
+ */
+export function parseDebounce(value: string): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(
+      `Invalid --debounce value "${value}": expected a positive integer of milliseconds`
+    );
+  }
+  return parsed;
+}
 
 export const watchCommand = new Command('watch')
   .description('Watch a directory and organize files automatically')
@@ -13,6 +28,14 @@ export const watchCommand = new Command('watch')
   .option('--no-initial', 'Skip initial organization on start')
   .option('--debounce <ms>', 'Debounce time in ms', '1000')
   .action(async (source: string, options) => {
+    let debounceMs: number;
+    try {
+      debounceMs = parseDebounce(options.debounce);
+    } catch (err) {
+      fail(err instanceof Error ? err.message : 'Invalid --debounce value');
+      return;
+    }
+
     try {
       const sourceDir = path.resolve(source);
       let configPath = options.config;
@@ -25,7 +48,7 @@ export const watchCommand = new Command('watch')
       if (configPath) {
         config = await loadConfig(configPath);
       } else {
-        logger.warn('No config file found. Use "fo config init" to create one.');
+        fail('No config file found. Use "fo config init" to create one.');
         return;
       }
 
@@ -37,7 +60,8 @@ export const watchCommand = new Command('watch')
 
       const watcher = new FolderWatcher(organizer, sourceDir, {
         ignorePatterns: appConfig.watchIgnorePatterns,
-        debounceMs: 500,
+        debounceMs,
+        organizeOnStart: options.initial !== false,
         conflictResolution: options.conflict || config.conflictResolution || 'rename',
         plugins: config.plugins,
         pluginBaseDir: configPath ? path.dirname(path.resolve(configPath)) : undefined,
@@ -55,7 +79,6 @@ export const watchCommand = new Command('watch')
       process.on('SIGTERM', shutdown);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error(`Watch failed: ${message}`);
-      process.exit(1);
+      fail(`Watch failed: ${message}`);
     }
   });

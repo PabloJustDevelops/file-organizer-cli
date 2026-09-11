@@ -3,8 +3,8 @@ import path from 'path';
 import { loadConfig, saveConfig, initConfig, findConfigPath } from '../../config/loader.js';
 import { getExampleConfig, getExampleRules } from '../../config/schema.js';
 import { RulesEngine } from '../../core/rules-engine.js';
-import { logger } from '../../utils/logger.js';
-import { printRules, printConfig } from '../ui/output.js';
+import { logger, setLogLevel } from '../../utils/logger.js';
+import { fail, printJson, printRules, printConfig } from '../ui/output.js';
 
 export const configCommand = new Command('config')
   .description('Manage configuration');
@@ -30,7 +30,7 @@ configCommand
       logger.gray('Edit this file to customize your rules');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error(`Failed to create config: ${message}`);
+      fail(`Failed to create config: ${message}`);
     }
   });
 
@@ -38,7 +38,10 @@ configCommand
   .command('show')
   .description('Show current configuration')
   .option('-c, --config <path>', 'Path to config file')
+  .option('--json', 'Output machine-readable JSON', false)
   .action(async (options) => {
+    const json = options.json === true;
+    if (json) setLogLevel('error');
     try {
       let configPath = options.config;
 
@@ -47,15 +50,19 @@ configCommand
       }
 
       if (!configPath) {
-        logger.warn('No config file found. Use "fo config init" to create one.');
+        fail('No config file found. Use "fo config init" to create one.', json);
         return;
       }
 
       const config = await loadConfig(configPath);
-      printConfig(config as unknown as Record<string, unknown>);
+      if (json) {
+        printJson(config);
+      } else {
+        printConfig(config as unknown as Record<string, unknown>);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error(`Failed to show config: ${message}`);
+      fail(`Failed to show config: ${message}`, json);
     }
   });
 
@@ -72,7 +79,7 @@ configCommand
       }
 
       if (!fullPath) {
-        logger.warn('No config file found.');
+        fail('No config file found.');
         return;
       }
 
@@ -93,8 +100,7 @@ configCommand
       printRules(config.rules);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error(`Invalid configuration: ${message}`);
-      process.exit(1);
+      fail(`Invalid configuration: ${message}`);
     }
   });
 

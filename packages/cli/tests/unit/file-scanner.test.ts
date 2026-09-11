@@ -59,6 +59,22 @@ describe('FileScanner', () => {
     expect(path.basename(files[0].path)).toBe('a.jpg');
   });
 
+  it('excludes given directories from the scan', async () => {
+    await fs.ensureDir(path.join(testDir, 'images'));
+    await fs.writeFile(path.join(testDir, 'images', 'x.jpg'), 'x');
+    await fs.writeFile(path.join(testDir, 'images-note.txt'), 'n');
+
+    const files = await scanner.scan(testDir, {
+      recursive: true,
+      excludeDirs: [path.join(testDir, 'images')],
+    });
+    const names = files.map((f) => path.basename(f.path)).sort();
+
+    // 'images/' is gone, but a sibling whose name merely starts with "images"
+    // must survive (the exclusion is path-aware, not a substring match).
+    expect(names).toEqual(['a.jpg', 'b.txt', 'c.jpg', 'images-note.txt']);
+  });
+
   it('gathers real file stats (size, dates, extension)', async () => {
     const files = await scanner.scan(testDir);
     const jpg = files.find((f) => f.name === 'a');

@@ -55,7 +55,16 @@ jobs:
         working-directory: packages/cli
 
       - name: Publish to npm
-        run: npm publish
         working-directory: packages/cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [[ "$VERSION" == *-* ]]; then
+            TAG="${VERSION#*-}"
+            TAG="${TAG%%.*}"
+          else
+            TAG="latest"
+          fi
+          echo "Publishing $VERSION with dist-tag: $TAG"
+          npm publish --tag "$TAG"

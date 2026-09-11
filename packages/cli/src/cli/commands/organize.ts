@@ -2,8 +2,8 @@ import { Command } from 'commander';
 import path from 'path';
 import { Organizer } from '../../core/organizer.js';
 import { loadConfig, findConfigPath } from '../../config/loader.js';
-import { logger } from '../../utils/logger.js';
-import { printOrganizeResult } from '../ui/output.js';
+import { logger, setLogLevel } from '../../utils/logger.js';
+import { fail, printJson, printOrganizeResult } from '../ui/output.js';
 import { promptForConflictResolution, confirmAction } from '../ui/prompts.js';
 
 export const organizeCommand = new Command('organize')
@@ -17,7 +17,11 @@ export const organizeCommand = new Command('organize')
   .option('--conflict <resolution>', 'Conflict resolution (rename|overwrite|skip|newest)')
   .option('-i, --interactive', 'Interactive mode (prompt for conflicts)', false)
   .option('-y, --yes', 'Skip confirmation prompt', false)
+  .option('--json', 'Output machine-readable JSON (implies non-interactive)', false)
   .action(async (source: string, options) => {
+    const json = options.json === true;
+    // JSON mode: stdout must carry only the payload, so silence info/debug.
+    if (json) setLogLevel('error');
     try {
       const sourceDir = path.resolve(source);
       let configPath = options.config;
@@ -33,7 +37,7 @@ export const organizeCommand = new Command('organize')
       if (configPath) {
         config = await loadConfig(configPath);
       } else {
-        logger.warn('No config file found. Use "fo config init" to create one.');
+        fail('No config file found. Use "fo config init" to create one.', json);
         return;
       }
 
@@ -73,8 +77,9 @@ export const organizeCommand = new Command('organize')
       }
 
       // Safety net for first-time users: a real run touching many files
-      // asks for confirmation unless -y/--yes was given.
-      if (!organizeOptions.dryRun && !options.yes) {
+      // asks for confirmation unless -y/--yes was given. JSON mode is
+      // non-interactive by definition, so it skips the prompt.
+      if (!organizeOptions.dryRun && !options.yes && !json) {
         const preview = await organizer.preview(sourceDir, organizeOptions);
         if (preview.moved.length >= 20) {
           logger.warn(
@@ -91,6 +96,11 @@ export const organizeCommand = new Command('organize')
 
       const result = await organizer.organize(sourceDir, organizeOptions);
 
+      if (json) {
+        printJson({ dryRun: organizeOptions.dryRun, ...result });
+        return;
+      }
+
       if (result.moved.length === 0 && result.skipped.length === 0 && result.errors.length === 0) {
         logger.info('No files to organize.');
         return;
@@ -104,7 +114,6 @@ export const organizeCommand = new Command('organize')
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error(`Organization failed: ${message}`);
-      process.exit(1);
+      fail(`Organization failed: ${message}`, json);
     }
   });
