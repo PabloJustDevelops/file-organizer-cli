@@ -12,7 +12,7 @@ rules:
     priority: 20
     condition:
       type: regex
-      pattern: "(?i)(screenshot|screen shot|captura)"
+      pattern: "(screenshot|screen shot|captura)"
 
   # Project files with regex capture
   - name: Project Alpha

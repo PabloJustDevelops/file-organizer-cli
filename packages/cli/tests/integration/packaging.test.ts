@@ -55,6 +55,7 @@ describe('npm tarball (distribution)', () => {
 
     const required = [
       'dist/cli/index.js',
+      'dist/mcp/index.js',
       'dist/mcp/server.js',
       'dist/tui/index.js',
       'dist/index.js',

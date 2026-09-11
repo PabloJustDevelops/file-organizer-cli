@@ -10,7 +10,6 @@ export interface FileInfo {
 
 export interface RuleCondition {
   type: 'regex' | 'extension' | 'size' | 'date';
-  match?: string;
   pattern?: string;
   extensions?: string[];
   minSize?: number;

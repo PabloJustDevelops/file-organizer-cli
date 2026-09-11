@@ -9,6 +9,7 @@ import { undoCommand } from './commands/undo.js';
 import { configCommand } from './commands/config.js';
 import { dedupCommand } from './commands/dedup.js';
 import { tuiCommand } from './commands/tui.js';
+import { mcpCommand } from './commands/mcp.js';
 import { setLogLevel, setLogFilePath } from '../utils/logger.js';
 
 const require = createRequire(import.meta.url);
@@ -42,6 +43,7 @@ program.addCommand(undoCommand);
 program.addCommand(configCommand);
 program.addCommand(dedupCommand);
 program.addCommand(tuiCommand);
+program.addCommand(mcpCommand);
 program.commands.find((c) => c.name() === 'tui')?.description('Open interactive TUI (experimental)');
 
 // `fo init` — most discoverable alias for creating a config

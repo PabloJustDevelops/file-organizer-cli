@@ -18,17 +18,33 @@ First public release candidate — not yet published to npm.
 - Scoped package identity (`@pablojustdevs/file-organizer-cli`) with a
   `LICENSE`, npm metadata, and a public `publishConfig`.
 - `--json` output for `organize`, `rules list`, and `config show`.
+- **MCP server is now reachable**: a `file-organizer-mcp` binary and a `fo mcp`
+  command, with a consumption guide in [`docs/MCP.md`](docs/MCP.md).
 - End-to-end test harness driving the built binary, plus a tarball install smoke
   test.
 
 ### Changed
 
 - Failed commands now exit non-zero instead of reporting success.
+- **`recursive` now defaults to `false`.** A config that omits it no longer
+  descends into subdirectories; opt in per run with `-r` (or set
+  `recursive: true`). This matches the flag and the docs, and is the safer
+  default.
+- `condition.pattern` and every `patterns[]` entry are validated at config
+  time, so a bad regex or an empty pattern fails `fo config validate` naming the
+  rule — instead of throwing mid-organize.
+- The MCP server resolves config through the same core helper as the CLI, so it
+  now honors `recursive`, `plugins`, `locale` and `sizeBuckets`, and `add_rule`
+  validates before writing.
 - `watch` derives its ignores from rule destinations (and excludes them from the
   scan), validates `--debounce`, and runs the initial pass that `--no-initial`
   documents.
 - The CLI entry no longer requires the TUI stack (`react`/`ink`); they load
   lazily, and `react` is a declared dependency so `fo-tui` works anywhere.
+
+### Removed
+
+- The unused `condition.match` field (accepted but never read).
 
 ### Fixed
 

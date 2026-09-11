@@ -58,7 +58,9 @@ export function validateAndNormalizeConfig(config: unknown): OrganizeConfig {
     rules,
     conflictResolution: validateConflictResolution(raw.conflictResolution),
     dryRun: Boolean(raw.dryRun),
-    recursive: raw.recursive !== false,
+    // Opt-in, matching the `-r` flag and RULES.md: never descend into
+    // subdirectories unless the user asked for it.
+    recursive: raw.recursive === true,
     includeHidden: Boolean(raw.includeHidden),
   };
 

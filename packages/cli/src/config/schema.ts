@@ -46,7 +46,6 @@ export const CONFIG_SCHEMA = {
           enum: ['regex', 'extension', 'size', 'date'],
         },
         pattern: { type: 'string' },
-        match: { type: 'string' },
         extensions: {
           type: 'array',
           items: { type: 'string' },
