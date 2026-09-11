@@ -31,7 +31,7 @@ const pkg = JSON.parse(
 
 describe('package metadata (distribution)', () => {
   it('AC-2: package name is scoped', () => {
-    expect(pkg.name).toBe('@pablojustdevelops/file-organizer-cli');
+    expect(pkg.name).toBe('@pablojustdevs/file-organizer-cli');
   });
 
   it('AC-4: publishConfig.access is public and bins are unchanged', () => {

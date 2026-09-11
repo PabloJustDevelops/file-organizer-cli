@@ -18,10 +18,26 @@ import { packageDir, removeDir } from './helpers.js';
  * and packages in `<prefix>/lib/node_modules`, while Windows puts both closer to
  * the prefix root. Both layouts are probed rather than assuming one.
  */
-const SCOPED_PACKAGE_DIR = path.join('@pablojustdevelops', 'file-organizer-cli');
+const SCOPED_PACKAGE_DIR = path.join('@pablojustdevs', 'file-organizer-cli');
 
 function firstExisting(candidates: string[]): string | undefined {
   return candidates.find((candidate) => fs.existsSync(candidate));
+}
+
+/**
+ * npm exports its config as `npm_config_*` env vars, and this test can run
+ * *inside* npm: `npm publish` triggers `prepublishOnly` → the full suite → here.
+ * An inherited `npm_config_dry_run` makes the nested `npm pack` print the
+ * filename without writing the tarball, so the install below would hit ENOENT.
+ *
+ * Deleting the key is not enough (the runtime may merge the parent env back in),
+ * so the value is forced to `false` *and* the command passes `--no-dry-run`,
+ * which outranks env config in npm's precedence order.
+ */
+function npmEnv(): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  env.npm_config_dry_run = 'false';
+  return env;
 }
 
 describe('tarball install smoke (e2e)', () => {
@@ -31,17 +47,19 @@ describe('tarball install smoke (e2e)', () => {
   beforeAll(() => {
     prefix = fs.mkdtempSync(path.join(os.tmpdir(), 'fo-e2e-install-'));
 
-    const packed = execSync('npm pack', {
+    const packed = execSync('npm pack --no-dry-run', {
       cwd: packageDir,
       encoding: 'utf-8',
+      env: npmEnv(),
       stdio: ['ignore', 'pipe', 'ignore'],
     });
     tarball = packed.trim().split(/\r?\n/).pop()?.trim();
     if (!tarball) throw new Error('npm pack produced no tarball name');
 
-    execSync(`npm install -g --prefix "${prefix}" "${path.join(packageDir, tarball)}"`, {
-      stdio: 'pipe',
-    });
+    execSync(
+      `npm install -g --no-dry-run --prefix "${prefix}" "${path.join(packageDir, tarball)}"`,
+      { env: npmEnv(), stdio: 'pipe' }
+    );
   }, 300_000);
 
   afterAll(() => {

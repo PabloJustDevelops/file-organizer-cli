@@ -46,5 +46,5 @@
 - [x] **Ciclo 1 del capability map completo** (5/5 módulos).
 - Deuda diferida al ciclo 2, registrada en el capability map:
   `config-integrity`, `governance`, `mcp-surface`.
-- Pendiente humano (no de código): poseer el scope `@pablojustdevelops` en npm,
+- Pendiente humano (no de código): poseer el scope `@pablojustdevs` en npm,
   configurar `NPM_TOKEN`, y el PR de versión `0.1.0`.

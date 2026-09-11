@@ -24,13 +24,13 @@ Rule-based file organization from the terminal. Define patterns in YAML — `fo`
 ## Installation
 
 ```bash
-npm install -g @pablojustdevelops/file-organizer-cli
+npm install -g @pablojustdevs/file-organizer-cli
 ```
 
 Or run it without installing:
 
 ```bash
-npx @pablojustdevelops/file-organizer-cli --help
+npx @pablojustdevs/file-organizer-cli --help
 ```
 
 **From source (development):**

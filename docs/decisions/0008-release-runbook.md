@@ -36,7 +36,7 @@ one gated on credentials, by design.
 
 `npm view file-organizer-cli` → **1.1.0 exists, owned by someone else**. The
 package now publishes under the scoped name
-**`@pablojustdevelops/file-organizer-cli`** with
+**`@pablojustdevs/file-organizer-cli`** with
 `publishConfig.access = "public"` (a scoped package defaults to restricted, so
 this is required for a public publish). Updated in the same change:
 
@@ -47,8 +47,11 @@ this is required for a public publish). Updated in the same change:
 - `docs/PLUGINS.md` install/import snippets
 - `README.md` install instructions
 
-Remaining human prerequisite: the `@pablojustdevelops` scope must be claimed on
-npm before the first publish.
+The scope name was later corrected to `@pablojustdevs` (2026-09-11): npm only
+accepts a scope that matches your username or one of your orgs, and the
+publisher's username is `pablojustdevs` — `@pablojustdevelops` is not owned and
+would have been rejected at publish. No remaining scope prerequisite: the scope
+is the publisher's own username.
 
 ## Going public — checklist
 
@@ -57,7 +60,7 @@ npm before the first publish.
 2. **Configure npm automation**: add the `NPM_TOKEN` secret
    (repo → Settings → Secrets and variables → Actions).
 3. **Name**: ✅ resolved 2026-09-11 — scoped
-   `@pablojustdevelops/file-organizer-cli` with `publishConfig.access = "public"`.
+   `@pablojustdevs/file-organizer-cli` with `publishConfig.access = "public"`.
 4. **Version**: bump `packages/cli/package.json` via PR (current
    `0.1.0-rc.1`), e.g. `0.1.0` for the first public release.
 5. **Smoke the tarball**: `npm pack --dry-run` in `packages/cli`; install
@@ -74,6 +77,6 @@ npm before the first publish.
 
 ## Rollback
 
-- npm: `npm unpublish @pablojustdevelops/file-organizer-cli@<version>` within
+- npm: `npm unpublish @pablojustdevs/file-organizer-cli@<version>` within
   the grace window, or `npm deprecate` afterwards.
 - GitHub: delete the release; `release.yml` does not retry on its own.

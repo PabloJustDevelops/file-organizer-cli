@@ -1,5 +1,5 @@
 {
-  "name": "@pablojustdevelops/file-organizer-cli",
+  "name": "@pablojustdevs/file-organizer-cli",
   "version": "0.1.0-rc.1",
   "description": "CLI tool to automatically organize files based on configurable rules",
   "type": "module",

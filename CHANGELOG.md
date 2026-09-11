@@ -15,7 +15,7 @@ First public release candidate — not yet published to npm.
 
 ### Added
 
-- Scoped package identity (`@pablojustdevelops/file-organizer-cli`) with a
+- Scoped package identity (`@pablojustdevs/file-organizer-cli`) with a
   `LICENSE`, npm metadata, and a public `publishConfig`.
 - `--json` output for `organize`, `rules list`, and `config show`.
 - End-to-end test harness driving the built binary, plus a tarball install smoke

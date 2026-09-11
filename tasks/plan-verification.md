@@ -35,7 +35,7 @@
   excluido por glob); el ratchet no se diluye.
 - **Ejecución del entry instalado, no del shim:** AC-9 asevera que los shims
   existen (`fo`/`fo.cmd`/`fo.ps1` según OS) y corre
-  `node <prefix>/node_modules/@pablojustdevelops/file-organizer-cli/dist/cli/index.js`
+  `node <prefix>/node_modules/@pablojustdevs/file-organizer-cli/dist/cli/index.js`
   para no volver a chocar con el spawn de `.cmd`.
 
 ## Riesgos y mitigaciones
