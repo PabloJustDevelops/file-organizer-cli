@@ -1,7 +1,7 @@
 # Plan: distribution
 
 > Spec: [SPEC-distribution.md](../docs/specs/SPEC-distribution.md)
-> (aprobada 2026-09-11; OQ-1 resuelto = `@pablojustdevelops`)
+> (aprobada 2026-09-11; OQ-1 resuelto = `@pablojustdevs`)
 > Fase 2 del proceso spec-driven-development · Módulo 1 del
 > [capability map](../docs/specs/CAPABILITY-MAP-cli-adoption.md)
 
@@ -10,7 +10,7 @@
 1. **`LICENSE` + metadata legal** — `LICENSE` MIT en la raíz (holder = autor),
    `author`/`license` en `packages/cli/package.json`. Primero: AC-1/AC-3.
 2. **Identidad scoped + publish config** — `name` →
-   `@pablojustdevelops/file-organizer-cli`; `publishConfig.access: "public"`;
+   `@pablojustdevs/file-organizer-cli`; `publishConfig.access: "public"`;
    `repository`/`homepage`/`bugs`/`engines`/`keywords`. Los `bin`
    (`fo`, `file-organizer`, `fo-tui`) no cambian.
 3. **Fix `prepublishOnly`** — `bun test` (runner integrado de Bun) →
@@ -48,7 +48,7 @@
 
 | Riesgo | Mitigación |
 |---|---|
-| El scope no existe en npm → publish falla | Prerrequisito humano: crear/poseer `@pablojustdevelops` antes de publicar; el módulo no publica |
+| El scope no existe en npm → publish falla | Prerrequisito humano: crear/poseer `@pablojustdevs` antes de publicar; el módulo no publica |
 | Cambiar `name` rompe enlaces globales previos | Solo cambia el nombre del paquete; los `bin` siguen iguales. Documentar `npm uninstall -g file-organizer-cli` si existía |
 | `files` + `.npmignore` se contradicen | El test de packaging asevera el set real vía `npm pack --dry-run --json` |
 | Quitar maps dificulta depurar | Maps se quedan en el build local; solo se excluyen del tarball |

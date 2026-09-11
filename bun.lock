@@ -11,7 +11,7 @@
       },
     },
     "packages/cli": {
-      "name": "@pablojustdevelops/file-organizer-cli",
+      "name": "@pablojustdevs/file-organizer-cli",
       "version": "0.1.0-rc.1",
       "bin": {
         "fo": "dist/cli/index.js",
@@ -203,7 +203,7 @@
 
     "@oxlint/plugins": ["@oxlint/plugins@1.81.0", "", {}, "sha512-HhD8kd3r6XpelZkhxhRty/po8V6yK1VV63Eq4kSsOS2IoHUywG3DV2EX+z/ZHw46aLI74Y6aA604NRiAqLKW9w=="],
 
-    "@pablojustdevelops/file-organizer-cli": ["@pablojustdevelops/file-organizer-cli@workspace:packages/cli"],
+    "@pablojustdevs/file-organizer-cli": ["@pablojustdevs/file-organizer-cli@workspace:packages/cli"],
 
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.63.1", "", { "os": "android", "cpu": "arm" }, "sha512-UZ8sUxPTiHWYX9QNdJedb1kDZSpS1t/VPWBWGSgqHNi9w3Cu6IXvu2mzbhiTiPvtrqgTQJ+zqiAq2iPIPilpaQ=="],
 

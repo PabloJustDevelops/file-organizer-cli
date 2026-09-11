@@ -11,7 +11,7 @@ cloned. Today the only documented path is `git clone` + `bun install -g
 ./packages/cli`, and the npm package name `file-organizer-cli` is already owned
 by a third party, so `npm i -g` / `npx` cannot work.
 
-Success looks like: a stranger runs one `npm i -g @pablojustdevelops/file-organizer-cli`
+Success looks like: a stranger runs one `npm i -g @pablojustdevs/file-organizer-cli`
 (or `npx`), gets a working `fo`, and the published tarball carries a license, a
 README, real types, and no source/tests. The package is publishable by CI with
 no manual flags.
@@ -30,7 +30,7 @@ no manual flags.
 
 ### Identity
 
-- Package name becomes scoped: `@pablojustdevelops/file-organizer-cli`
+- Package name becomes scoped: `@pablojustdevs/file-organizer-cli`
   (OQ-1 resolved). The bin names stay `fo`, `file-organizer`, `fo-tui` — only
   the package name changes, so every existing command keeps working.
 - A single source of truth for the name: `packages/cli/package.json`. Docs,
@@ -78,7 +78,7 @@ no manual flags.
 ### Install surface
 
 - README "Installation" is rewritten around the scoped name, with `npm i -g`
-  and `npx @pablojustdevelops/file-organizer-cli` forms, Node requirement, and no
+  and `npx @pablojustdevs/file-organizer-cli` forms, Node requirement, and no
   clone-based path as the primary route.
 
 ## 4. Commands
@@ -88,7 +88,7 @@ Build:      bun run build            # tsup, from packages/cli
 Test:       bun run test             # vitest run
 Lint:       bun run lint             # oxlint + tsc --noEmit
 Pack check: npm pack --dry-run       # from packages/cli, after build
-Install:    npm install -g ./pablojustdevelops-file-organizer-cli-<version>.tgz
+Install:    npm install -g ./pablojustdevs-file-organizer-cli-<version>.tgz
 ```
 
 ## 5. Testing strategy
@@ -110,7 +110,7 @@ Install:    npm install -g ./pablojustdevelops-file-organizer-cli-<version>.tgz
 | ID   | Given | When | Then | Test |
 |------|-------|------|------|------|
 | AC-1 | repo root and `packages/cli/` | listing files | `LICENSE` exists in both, is MIT, names the copyright holder, and both copies are identical | metadata test |
-| AC-2 | `packages/cli/package.json` | reading `name` | equals `@pablojustdevelops/file-organizer-cli`; no doc references the unscoped install target | metadata test + grep |
+| AC-2 | `packages/cli/package.json` | reading `name` | equals `@pablojustdevs/file-organizer-cli`; no doc references the unscoped install target | metadata test + grep |
 | AC-3 | `packages/cli/package.json` | inspecting metadata | `repository`, `homepage`, `bugs`, `author`, `license`, `engines`, `keywords` all present | metadata test |
 | AC-4 | `packages/cli/package.json` | inspecting publish config | `publishConfig.access === "public"` and `bin` still maps `fo`, `file-organizer`, `fo-tui` | metadata test |
 | AC-5 | a completed build | `npm pack --dry-run --json` | includes `dist/cli/index.js`, `dist/mcp/server.js`, `dist/tui/index.js`, `dist/index.js`, `dist/index.d.ts`, `package.json`, `README.md`, `LICENSE`; excludes `src/`, `tests/`, `tools/`, and `*.map` | packaging test |
@@ -143,8 +143,11 @@ Install:    npm install -g ./pablojustdevelops-file-organizer-cli-<version>.tgz
 
 ## 9. Open questions
 
-- **OQ-1:** ~~Exact npm scope/handle~~ **Resolved: `@pablojustdevelops`.** The
-  scope must be owned on npm before publish (human step).
+- **OQ-1:** ~~Exact npm scope/handle~~ **Resolved: `@pablojustdevs`** — the
+  publisher's npm username, so the scope is owned by definition. (An earlier
+  revision proposed `@pablojustdevelops` from the GitHub handle, which npm would
+  have rejected: a scope is only valid when it matches your username or an org
+  you belong to.)
 - **OQ-2:** Copyright holder line for `LICENSE` (full name or handle?). Default:
   match `package.json` `author`.
 - **OQ-3:** Ship sourcemaps in the tarball? Default: **no** — exclude `*.map`,
@@ -158,7 +161,7 @@ Install:    npm install -g ./pablojustdevelops-file-organizer-cli-<version>.tgz
 ## 10. Changelog
 
 - 2026-09-11 — spec drafted (cycle-1 module `distribution`).
-- 2026-09-11 — OQ-1 resolved (`@pablojustdevelops`); tarball evidence measured
+- 2026-09-11 — OQ-1 resolved (`@pablojustdevs`); tarball evidence measured
   (1 file without build → 14 files post-build, no LICENSE/README, maps shipped);
   baseline green with a restored toolchain: build ✅, `bun run test` → 236
   passed / 1 skipped, `bun run lint` → 0 errors.
@@ -183,3 +186,10 @@ Install:    npm install -g ./pablojustdevelops-file-organizer-cli-<version>.tgz
   Fix: `tui.ts` lazily `import()`s the TUI stack, and `react` is declared as a
   direct dependency so `fo-tui` works on any package manager. Re-verified: E2E
   install smoke green under bun.
+- 2026-09-11 — **scope corrected to `@pablojustdevs`** before the first publish.
+  The publisher's npm username is `pablojustdevs`, not `pablojustdevelops`;
+  npm only accepts a scope matching your username or one of your orgs, so the
+  original name was unpublishable. Renamed across `package.json`, both READMEs,
+  `docs/PLUGINS.md`, the runbook, this spec, the CHANGELOG, the tests that assert
+  it, and the lockfile. The GitHub handle `PabloJustDevelops` in
+  `repository`/`homepage`/`bugs`/`author` is unaffected.

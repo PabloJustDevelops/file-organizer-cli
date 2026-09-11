@@ -11,7 +11,7 @@
   - Files: `LICENSE`, `packages/cli/package.json`
 
 - [x] Task 2: Identidad scoped + publish config + fix `prepublishOnly`
-  - Acceptance: `name` = `@pablojustdevelops/file-organizer-cli`;
+  - Acceptance: `name` = `@pablojustdevs/file-organizer-cli`;
     `publishConfig.access === "public"`; `repository`/`homepage`/`bugs`/
     `engines`/`keywords` presentes; `bin` intacto; `prepublishOnly` corre
     vitest (`bun run test`), no `bun test`.
@@ -49,7 +49,7 @@
 - [x] Todos los tasks completos → spec pasa a Status: Implemented (2026-09-11).
 - Extra no planificado (bug de release): `release.yml` publicaba un prerelease
   sin `--tag`, lo que npm rechaza. El publish step ahora deriva el dist-tag.
-- Pendiente humano (no de código): crear/poseer el scope `@pablojustdevelops`
+- Pendiente humano (no de código): crear/poseer el scope `@pablojustdevs`
   en npm y configurar `NPM_TOKEN`.
 - Siguiente módulo del capability map: `verification` (harness E2E del binario,
   que automatiza AC-6/AC-10 e instala el tarball en un prefix aislado).
