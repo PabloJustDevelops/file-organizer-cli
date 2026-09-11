@@ -13,12 +13,16 @@ import { packageDir, removeDir } from './helpers.js';
  * The shims are asserted on disk but not spawned — on Windows a `.cmd` cannot be
  * spawned without a shell — so the installed JS entry is executed directly with
  * `process.execPath`.
+ *
+ * npm's global layout is platform-dependent: POSIX puts bins in `<prefix>/bin`
+ * and packages in `<prefix>/lib/node_modules`, while Windows puts both closer to
+ * the prefix root. Both layouts are probed rather than assuming one.
  */
-const SCOPED_PACKAGE_DIR = path.join(
-  'node_modules',
-  '@pablojustdevelops',
-  'file-organizer-cli'
-);
+const SCOPED_PACKAGE_DIR = path.join('@pablojustdevelops', 'file-organizer-cli');
+
+function firstExisting(candidates: string[]): string | undefined {
+  return candidates.find((candidate) => fs.existsSync(candidate));
+}
 
 describe('tarball install smoke (e2e)', () => {
   let prefix: string;
@@ -46,16 +50,22 @@ describe('tarball install smoke (e2e)', () => {
   });
 
   it('AC-9: installed package exposes its bins and runs', () => {
+    const binDir = firstExisting([path.join(prefix, 'bin'), prefix]) ?? prefix;
     const binNames =
       process.platform === 'win32'
         ? ['fo.cmd', 'file-organizer.cmd', 'fo-tui.cmd']
         : ['fo', 'file-organizer', 'fo-tui'];
     for (const bin of binNames) {
-      expect(fs.existsSync(path.join(prefix, bin)), `missing bin ${bin}`).toBe(true);
+      expect(fs.existsSync(path.join(binDir, bin)), `missing bin ${bin} in ${binDir}`).toBe(true);
     }
 
-    const entry = path.join(prefix, SCOPED_PACKAGE_DIR, 'dist', 'cli', 'index.js');
-    expect(fs.existsSync(entry)).toBe(true);
+    const installedDir =
+      firstExisting([
+        path.join(prefix, 'lib', 'node_modules', SCOPED_PACKAGE_DIR),
+        path.join(prefix, 'node_modules', SCOPED_PACKAGE_DIR),
+      ]) ?? path.join(prefix, 'node_modules', SCOPED_PACKAGE_DIR);
+    const entry = path.join(installedDir, 'dist', 'cli', 'index.js');
+    expect(fs.existsSync(entry), `missing entry ${entry}`).toBe(true);
 
     const result = spawnSync(process.execPath, [entry, '--version'], { encoding: 'utf-8' });
     expect(result.status).toBe(0);
