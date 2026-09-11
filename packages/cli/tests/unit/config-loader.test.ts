@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import yaml from 'yaml';
 import { validateAndNormalizeConfig, DEFAULT_CONFIG } from '../../src/config/loader.js';
+import { getExampleConfig, CONFIG_SCHEMA } from '../../src/config/schema.js';
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 describe('Config Loader', () => {
   describe('validateAndNormalizeConfig', () => {
@@ -183,6 +190,87 @@ describe('Config Loader', () => {
     it('accepts an empty plugins array (no plugins configured)', () => {
       const config = validateAndNormalizeConfig({ rules: [], plugins: [] });
       expect(config.plugins).toEqual([]);
+    });
+  });
+
+  describe('SPEC-config-integrity: content validated at config time', () => {
+    const withCondition = (condition: unknown) =>
+      validateAndNormalizeConfig({
+        rules: [{ name: 'Bad', patterns: ['*'], destination: './x', condition }],
+      });
+
+    it('AC-1: rejects an invalid regex and names the rule', () => {
+      expect(() => withCondition({ type: 'regex', pattern: '([' })).toThrow(
+        /Invalid rule "Bad": condition\.pattern is not a valid regex/
+      );
+    });
+
+    it('AC-2: keeps a valid regex untouched', () => {
+      const config = withCondition({ type: 'regex', pattern: '^(project\\d+)-' });
+      expect(config.rules[0].condition?.pattern).toBe('^(project\\d+)-');
+    });
+
+    it('AC-3: a regex condition without a pattern is an error', () => {
+      expect(() => withCondition({ type: 'regex' })).toThrow(
+        'Invalid rule "Bad": regex condition requires a pattern'
+      );
+    });
+
+    it('AC-4: only regex requires a pattern (size without it is fine)', () => {
+      expect(() => withCondition({ type: 'size', minSize: 10 })).not.toThrow();
+    });
+
+    it('AC-5: non-string / empty patterns[] entries are rejected with the index', () => {
+      for (const bad of [[42], [''], [null], ['  ']]) {
+        expect(() =>
+          validateAndNormalizeConfig({
+            rules: [{ name: 'Bad', patterns: bad, destination: './x' }],
+          })
+        ).toThrow('Invalid rule "Bad": patterns[0] must be a non-empty string');
+      }
+    });
+
+    it('AC-6: valid patterns are preserved', () => {
+      const config = validateAndNormalizeConfig({
+        rules: [{ name: 'Ok', patterns: ['*.jpg', '*.png'], destination: './x' }],
+      });
+      expect(config.rules[0].patterns).toEqual(['*.jpg', '*.png']);
+    });
+
+    it('AC-7/AC-8: recursive defaults to false and is honored when true', () => {
+      expect(validateAndNormalizeConfig({ rules: [] }).recursive).toBe(false);
+      expect(
+        validateAndNormalizeConfig({ rules: [], recursive: true }).recursive
+      ).toBe(true);
+    });
+
+    it('AC-9: the example config agrees with the loader default', () => {
+      expect(getExampleConfig().recursive).toBe(false);
+    });
+
+    it('AC-10: the dead condition.match field is gone from the schema', () => {
+      const condition = CONFIG_SCHEMA.definitions.condition as {
+        properties: Record<string, unknown>;
+      };
+      expect(condition.properties).not.toHaveProperty('match');
+    });
+
+    it('AC-16: every shipped config example validates', () => {
+      const dir = path.join(repoRoot, 'config-examples');
+      const files = fs.readdirSync(dir).filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'));
+      expect(files.length).toBeGreaterThan(0);
+
+      for (const file of files) {
+        const raw = yaml.parse(fs.readFileSync(path.join(dir, file), 'utf-8'));
+        expect(
+          () => validateAndNormalizeConfig(raw),
+          `config-examples/${file} does not validate`
+        ).not.toThrow();
+      }
+    });
+
+    it('AC-16: the generated example config validates too', () => {
+      expect(() => validateAndNormalizeConfig(getExampleConfig())).not.toThrow();
     });
   });
 

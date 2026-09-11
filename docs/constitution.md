@@ -43,7 +43,10 @@ User-facing behavior starts as a spec before implementation begins.
 - When behavior changes, the spec changes in the **same PR** as the code.
   A spec that no longer matches reality is a bug of equal severity to a code bug.
 - Documentation that describes unimplemented behavior MUST be marked as
-  *Planned — not implemented* until it ships. (Known offender: `PLUGINS.md`.)
+  *Planned — not implemented* until it ships. (Amended by
+  [ADR-0009](decisions/0009-constitution-plugin-status.md): the plugin system and
+  `PLUGINS.md` are both shipped, so the earlier "known offender" example no
+  longer applies.)
 - Architectural decisions that constrain future work are recorded as ADRs in
   `docs/decisions/`, numbered sequentially, never edited after acceptance —
   superseded, not rewritten.

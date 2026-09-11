@@ -59,24 +59,46 @@ Matches all files.
 
 ## Destination Variables
 
-Use variables in destination paths:
+Use variables in destination paths. **Placeholders are case-insensitive**
+(`{Year}` resolves like `{year}`); an unknown token is left as literal text and
+`fo` warns about it at organize time (and `fo config validate` reports it).
 
 | Variable | Type | Example Output |
 |----------|------|----------------|
 | `{year}` | Number | `2024` |
 | `{month}` | Number | `01` - `12` |
-| `{monthName}` | String | `january` - `december` |
+| `{monthName}` | String | `january` - `december` (honors `locale`) |
 | `{day}` | Number | `01` - `31` |
-| `{year-month}` | String | `2024-03` |
+| `{year-month}` / `{yearMonth}` | String | `2024-03` |
 | `{extension}` | String | `jpg`, `pdf` |
 | `{type}` | String | `image`, `document`, `video`, `audio`, `code`, `archive`, `other` |
 | `{name}` | String | Filename without extension |
-| `{match1}` | String | First regex capture group |
+| `{parent}` | String | Name of the subfolder the file was scanned from |
+| `{sizeBucket}` | String | `tiny`, `small`, `medium`, `large`, `huge` (thresholds via `sizeBuckets`) |
+| `{now:<format>}` | String | **Run-time** date, e.g. `{now:year-month}` → `2026-09`; accepts `year`, `month`, `monthName`, `day`, `year-month` |
+| `{match}` / `{match1}` | String | Capture group from the rule's regex `condition.pattern` (`{match}` = group 0, `{match1}` = group 1) |
+
+## Config Options
+
+Beyond `rules:`, the config file accepts:
+
+| Key | Type | Default | Meaning |
+|-----|------|---------|---------|
+| `conflictResolution` | `rename` \| `overwrite` \| `skip` \| `newest` | `rename` | How to resolve a destination that already exists |
+| `recursive` | Boolean | **`false`** | Descend into subdirectories when scanning. Off by default — opt in per run with `-r` |
+| `dryRun` | Boolean | `false` | Preview only; equivalent to always passing `--dry-run` |
+| `includeHidden` | Boolean | `false` | Include dotfiles when scanning |
+| `locale` | String (BCP-47) | `en-US` | Affects `{monthName}` and `{now:monthName}`; invalid tags are rejected by `fo config validate` |
+| `sizeBuckets` | Object | `{ small: 100KB, medium: 1MB, large: 100MB }` | Byte thresholds for `{sizeBucket}` (positive numbers) |
+| `plugins` | String[] | `[]` | Plugin specs loaded before any file is moved |
+
 
 ## Conditions
 
 ### Regex Condition
-Match files using regular expressions:
+Match files using regular expressions. The `pattern` is **required** and is
+compiled at config time, so a typo fails `fo config validate` (naming the rule)
+instead of the organize run:
 
 ```yaml
 condition:
@@ -154,7 +176,7 @@ rules:
     priority: 20
     condition:
       type: regex
-      pattern: "(?i)(screenshot|screen shot|captura)"
+      pattern: "(screenshot|screen shot|captura)"
 
   # Project files with regex capture
   - name: Project Alpha Files

@@ -40,6 +40,7 @@ describe('package metadata (distribution)', () => {
       fo: 'dist/cli/index.js',
       'file-organizer': 'dist/cli/index.js',
       'fo-tui': 'dist/tui/index.js',
+      'file-organizer-mcp': 'dist/mcp/index.js',
     });
   });
 

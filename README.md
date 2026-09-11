@@ -75,6 +75,7 @@ fo watch ~/Downloads
 | `fo config validate` | Validate config syntax |
 | `fo dedup [source]` | Find duplicates; `--delete` moves them to a restorable backup |
 | `fo-tui [source]` | Open interactive TUI |
+| `fo mcp` | Run the MCP server over stdio (for MCP clients) |
 
 ### Interactive TUI
 
@@ -266,6 +267,7 @@ How this project is built — read before adding a feature:
 | [`docs/decisions/`](docs/decisions/) | Architecture Decision Records — how and why, immutable once accepted |
 | [`docs/RULES.md`](docs/RULES.md) | Rules engine & config reference |
 | [`docs/PLUGINS.md`](docs/PLUGINS.md) | Plugin system — hooks, rules, transforms, publishing |
+| [`docs/MCP.md`](docs/MCP.md) | MCP server — client config and tools |
 
 Workflow for user-facing behavior: **spec (`docs/specs/<feature>.md`) → plan → tasks → implement → tests linked from the spec's acceptance criteria.**
 

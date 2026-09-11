@@ -125,4 +125,23 @@ describe('collectPluginRules', () => {
       { plugin: 'string-thrower', hook: 'customRules', error: 'customRules() threw: plain string failure' },
     ]);
   });
+
+  it('SPEC-config-integrity AC-15: an invalid regex is isolated per rule', async () => {
+    const plugins: OrganizerPlugin[] = [
+      {
+        name: 'bad-regex',
+        version: '1.0.0',
+        customRules: () => [
+          { name: 'Broken', patterns: ['*'], destination: './x', condition: { type: 'regex', pattern: '([' } },
+          { name: 'Fine', patterns: ['*.ok'], destination: './ok' },
+        ],
+      },
+    ];
+
+    const { rules, failures } = await collectPluginRules(plugins);
+
+    expect(rules.map((r) => r.name)).toEqual(['Fine']);
+    expect(failures).toHaveLength(1);
+    expect(failures[0].error).toContain('not a valid regex');
+  });
 });

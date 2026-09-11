@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import path from 'path';
 import { Organizer } from '../../core/organizer.js';
+import { buildOrganizeOptions } from '../../core/organize-options.js';
 import { loadConfig, findConfigPath } from '../../config/loader.js';
 import { logger, setLogLevel } from '../../utils/logger.js';
 import { fail, printJson, printOrganizeResult } from '../ui/output.js';
@@ -62,15 +63,14 @@ export const organizeCommand = new Command('organize')
 
       // CLI flags win only when explicitly provided; otherwise fall back to
       // config values so YAML settings are not silently overridden.
-      const organizeOptions = {
-        dryRun: options.dryRun ?? config.dryRun ?? false,
-        conflictResolution: config.conflictResolution || 'rename',
-        recursive: options.recursive ?? config.recursive ?? false,
-        includeHidden: options.hidden ?? config.includeHidden ?? false,
-        plugins: config.plugins,
+      // Shared with the MCP adapter: one resolution, no drift.
+      const organizeOptions = buildOrganizeOptions(config, {
+        dryRun: options.dryRun,
+        recursive: options.recursive,
+        includeHidden: options.hidden,
         // Local plugin specs (./x.js) resolve relative to the YAML file.
         pluginBaseDir: path.dirname(path.resolve(configPath)),
-      };
+      });
 
       if (organizeOptions.dryRun) {
         logger.info('Running in dry-run mode (no files will be moved)');
