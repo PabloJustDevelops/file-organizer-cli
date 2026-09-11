@@ -156,6 +156,9 @@ describe('FolderWatcher (integration)', () => {
     const organizer = new Organizer({ historyDir });
     organizer.setRules(config.rules);
     await fs.writeFile(path.join(testDir, 'pre.jpg'), 'existing');
+    // Let the write settle before the watch registers, so only the initial
+    // pass can move it — not a stray add event from the registration race.
+    await new Promise((r) => setTimeout(r, 500));
 
     const w = new FolderWatcher(organizer, testDir, {
       debounceMs: 20,
@@ -174,6 +177,7 @@ describe('FolderWatcher (integration)', () => {
     const organizer = new Organizer({ historyDir });
     organizer.setRules(config.rules);
     await fs.writeFile(path.join(testDir, 'pre.jpg'), 'existing');
+    await new Promise((r) => setTimeout(r, 500));
 
     const w = new FolderWatcher(organizer, testDir, {
       debounceMs: 20,
@@ -182,10 +186,60 @@ describe('FolderWatcher (integration)', () => {
     await w.start();
     watcher = w;
 
-    await new Promise((r) => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 400));
     await w.idle();
 
     expect(await fs.pathExists(path.join(testDir, 'pre.jpg'))).toBe(true);
     expect(await fs.pathExists(path.join(testDir, 'images', 'pre.jpg'))).toBe(false);
+  });
+
+  it('AC-6: learns a templated destination so it is not re-scanned', async () => {
+    const templated: OrganizeConfig = {
+      rules: [{ name: 'ByYear', patterns: ['*.jpg'], destination: './{year}' }],
+    };
+    const organizer = new Organizer({ historyDir });
+    organizer.setRules(templated.rules);
+    const w = new FolderWatcher(organizer, testDir, {
+      debounceMs: 20,
+      organizeOnStart: false,
+    });
+    await w.start();
+    watcher = w;
+
+    await fs.writeFile(path.join(testDir, 'a.jpg'), 'a');
+    const year = new Date().getFullYear().toString();
+    await waitFor(async () => fs.pathExists(path.join(testDir, year, 'a.jpg')));
+    await w.idle();
+
+    // A file that lands inside the (now learned) destination must stay put:
+    // the destination is excluded from events and from the scan.
+    await fs.writeFile(path.join(testDir, year, 'b.jpg'), 'b');
+    await new Promise((r) => setTimeout(r, 300));
+    await w.idle();
+
+    expect(await fs.pathExists(path.join(testDir, year, 'b.jpg'))).toBe(true);
+  });
+
+  it('survives a failing organize pass without crashing', async () => {
+    const organizer = new Organizer({ historyDir });
+    organizer.setRules(config.rules);
+    // An unresolvable plugin spec makes every organize pass throw before it
+    // scans; the watcher must swallow it and keep watching.
+    const w = new FolderWatcher(organizer, testDir, {
+      debounceMs: 20,
+      organizeOnStart: true,
+      plugins: ['./missing-plugin.js'],
+      pluginBaseDir: testDir,
+    });
+    await w.start();
+    watcher = w;
+    await w.idle();
+
+    await fs.writeFile(path.join(testDir, 'boom.jpg'), 'x');
+    await new Promise((r) => setTimeout(r, 300));
+    await w.idle();
+
+    // The run failed, so nothing moved and the watcher is still alive.
+    expect(await fs.pathExists(path.join(testDir, 'boom.jpg'))).toBe(true);
   });
 });
