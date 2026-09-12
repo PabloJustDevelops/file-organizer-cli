@@ -20,9 +20,10 @@ import {
 } from './plugins/index.js';
 import type { OrganizerPlugin } from '../core/plugins/contract.js';
 import type { LoaderEdges } from './plugins/loader.js';
-import { getUniqueFilePath, moveFile } from '../utils/file-utils.js';
+import { getUniqueFilePath, generateUniqueName, moveFile } from '../utils/file-utils.js';
 import { HistoryStore } from '../utils/history-store.js';
 import { logger } from '../utils/logger.js';
+import { errorMessage } from '../utils/errors.js';
 
 export interface OrganizeOptions extends ScanOptions {
   dryRun?: boolean;
@@ -100,7 +101,7 @@ export class Organizer {
     await this.ensureInitialized();
     const {
       dryRun = false,
-      conflictResolution = 'rename',
+      conflictResolution: explicitConflictResolution,
       config,
       rules,
       locale,
@@ -108,6 +109,12 @@ export class Organizer {
       pluginBaseDir,
       ...scanOptions
     } = options;
+
+    // Explicit option → config → default, the same precedence the shared
+    // buildOrganizeOptions applies for the adapters. Reading only the flat
+    // option silently ignored `config.conflictResolution` for library callers.
+    const conflictResolution =
+      explicitConflictResolution ?? config?.conflictResolution ?? 'rename';
 
     // Flat `rules` and `config.rules` are equivalent; explicit options win.
     if (rules || config) {
@@ -265,12 +272,12 @@ export class Organizer {
 
         logger.debug(`${dryRun ? '[DRY RUN] Would move' : 'Moved'}: ${file.path} -> ${finalDest}`);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        const message = errorMessage(err);
         result.errors.push({
           file: file.path,
-          error: errorMessage,
+          error: message,
         });
-        logger.error(`Error moving ${file.path}: ${errorMessage}`);
+        logger.error(`Error moving ${file.path}: ${message}`);
       }
     }
 
@@ -349,11 +356,7 @@ export class Organizer {
           } else {
             // Plain move: the original location may have been taken meanwhile —
             // never fail mid-revert, fall back to a unique name next to it.
-            const restoreTarget = await getUniqueFilePath(op.from, 'rename', op.to);
-            if (restoreTarget === null) {
-              result.skipped.push({ file: op.to, reason: 'Could not determine restore target' });
-              continue;
-            }
+            const restoreTarget = await generateUniqueName(op.from);
             await moveFile(op.to, restoreTarget);
             result.moved.push({ from: op.to, to: restoreTarget, rule: 'undo' });
             logger.debug(`Undid: ${op.to} -> ${restoreTarget}`);
@@ -365,10 +368,10 @@ export class Organizer {
           });
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        const message = errorMessage(err);
         result.errors.push({
           file: op.to,
-          error: errorMessage,
+          error: message,
         });
       }
     }
@@ -385,7 +388,7 @@ export class Organizer {
               result.moved.push({ from: r.backupPath, to: r.path, rule: 'undo-replaced' });
             }
           } catch (err) {
-            const message = err instanceof Error ? err.message : 'Unknown error';
+            const message = errorMessage(err);
             result.errors.push({ file: r.path, error: message });
           }
         }

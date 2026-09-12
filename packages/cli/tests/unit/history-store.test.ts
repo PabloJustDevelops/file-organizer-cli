@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import { HistoryStore } from '../../src/utils/history-store.js';
+import { logger } from '../../src/utils/logger.js';
 import type { UndoEntry } from '../../src/types/index.js';
 
 describe('HistoryStore', () => {
@@ -86,6 +87,33 @@ describe('HistoryStore', () => {
     const store = makeStore();
     const loaded = await store.load();
     expect(loaded).toEqual([]);
+  });
+
+  it('warns and starts clean when the corrupt file cannot be moved aside', async () => {
+    await fs.ensureDir(tempDir);
+    await fs.writeFile(path.join(tempDir, 'history.json'), 'not valid json');
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(fs, 'move').mockRejectedValueOnce(new Error('EBUSY: locked'));
+
+    const loaded = await makeStore().load();
+
+    expect(loaded).toEqual([]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('could not be moved aside'));
+    vi.restoreAllMocks();
+  });
+
+  it('round-trips a replaced list and omits an empty one', async () => {
+    const withReplaced: UndoEntry = {
+      ...makeEntry('1', '/a/f.txt', '/b/f.txt'),
+      replaced: [{ path: '/b/f.txt', backupPath: '/h/replaced/x.txt' }],
+    };
+    const withEmpty: UndoEntry = { ...makeEntry('2', '/a/g.txt', '/b/g.txt'), replaced: [] };
+    await makeStore().save([withReplaced, withEmpty]);
+
+    const loaded = await makeStore().load();
+
+    expect(loaded[0].replaced).toEqual([{ path: '/b/f.txt', backupPath: '/h/replaced/x.txt' }]);
+    expect(loaded[1].replaced).toBeUndefined();
   });
 
   it('caches after first load', async () => {

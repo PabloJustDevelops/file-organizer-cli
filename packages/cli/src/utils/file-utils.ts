@@ -72,7 +72,12 @@ export async function getUniqueFilePath(
   }
 }
 
-async function generateUniqueName(filePath: string): Promise<string> {
+/**
+ * First free path next to `filePath`: returns it unchanged when free, else
+ * `name (1).ext`, `name (2).ext`, … The always-a-string primitive behind the
+ * `rename` conflict resolution and the undo re-home.
+ */
+export async function generateUniqueName(filePath: string): Promise<string> {
   const parsed = path.parse(filePath);
   let counter = 1;
   let newPath = filePath;
@@ -104,7 +109,7 @@ export async function moveFile(src: string, dest: string, options: { overwrite?:
     const isConflict =
       code === 'EEXIST' ||
       code === 'EPERM' ||
-      (code === undefined && /dest already exists/i.test((err as Error).message ?? ''));
+      (code === undefined && /dest already exists/i.test((err as Error).message));
     if (!options.overwrite && isConflict) {
       // TOCTOU: destination appeared between getUniqueFilePath and move.
       // Fall back to a fresh unique name instead of failing the whole run.

@@ -46,6 +46,10 @@ First public release candidate — not yet published to npm.
 
 - The unused `condition.match` field (accepted but never read).
 - The unused `copyFile` helper (no callers, not part of the public API).
+- Dead branches that could never be reached: the rule-condition `switch` default
+  (now exhaustive, so an unknown type fails closed instead of matching
+  everything), the nullish fallbacks on `split()[0]` where the value is never
+  nullish, and the redundant guard in the watcher's destination walk.
 
 ### Fixed
 
@@ -56,5 +60,10 @@ First public release candidate — not yet published to npm.
 - The move fallback that re-homes a file under a unique name now actually
   triggers: `fs-extra`'s "dest already exists." error carries no `code`, so the
   `EEXIST`/`EPERM` check never matched and the run failed instead of recovering.
+- `organize()` honors `config.conflictResolution`. Only the flat option was
+  read, so library callers passing a config silently got `rename` while the
+  CLI/MCP adapters (via `buildOrganizeOptions`) got the configured resolution.
+- One caught-error site still inlined its own `instanceof Error` check, which
+  shadowed the shared helper and left the non-`Error` fallback unreachable.
 
 [0.1.0]: https://github.com/PabloJustDevelops/file-organizer-cli/releases

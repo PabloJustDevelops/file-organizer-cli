@@ -4,6 +4,7 @@ import os from 'os';
 import crypto from 'crypto';
 import type { UndoEntry, MovedFile, ReplacedFile } from '../types/index.js';
 import { logger } from './logger.js';
+import { errorMessage } from './errors.js';
 
 interface SerializedEntry {
   id: string;
@@ -69,7 +70,7 @@ export class HistoryStore {
       }
     } catch (err) {
       // Corrupt history must not silently vanish — quarantine it, warn, start clean.
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = errorMessage(err);
       const corruptFile = this.historyFile + '.corrupt-' + Date.now();
       try {
         await fs.move(this.historyFile, corruptFile, { overwrite: true });

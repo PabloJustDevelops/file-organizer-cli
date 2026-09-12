@@ -10,6 +10,7 @@
  * never later inside `new RegExp` during an organize run.
  */
 import type { Rule } from '../types/index.js';
+import { errorMessage } from '../utils/errors.js';
 
 export function validateRuleCore(rule: unknown): Rule {
   if (!rule || typeof rule !== 'object') {
@@ -94,7 +95,7 @@ function validateCondition(
     try {
       new RegExp(pattern);
     } catch (err) {
-      const reason = err instanceof Error ? err.message : String(err);
+      const reason = errorMessage(err);
       throw new Error(
         `Invalid rule "${ruleName}": condition.pattern is not a valid regex: ${reason}`
       );

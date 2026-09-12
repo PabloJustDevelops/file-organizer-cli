@@ -130,13 +130,15 @@ function validateConflictResolution(value: unknown): OrganizeConfig['conflictRes
 /**
  * Global app config (the `conf` store). `cwd` is an optional seam: production
  * uses the OS config directory, tests pass a temp dir so they never read or
- * write the developer's real config.
+ * write the developer's real config. `conf` treats `cwd: undefined` exactly
+ * like an omitted option (it then derives the OS path from `projectName`), so
+ * the value can be passed straight through.
  */
 export async function loadAppConfig(cwd?: string): Promise<AppConfig> {
   const Conf = (await import('conf')).default;
   const conf = new Conf<{ config: AppConfig }>({
     projectName: 'file-organizer',
-    ...(cwd === undefined ? {} : { cwd }),
+    cwd,
     defaults: { config: DEFAULT_CONFIG },
   });
 
@@ -147,7 +149,7 @@ export async function saveAppConfig(config: AppConfig, cwd?: string): Promise<vo
   const Conf = (await import('conf')).default;
   const conf = new Conf<{ config: AppConfig }>({
     projectName: 'file-organizer',
-    ...(cwd === undefined ? {} : { cwd }),
+    cwd,
   });
 
   conf.set('config', config);
