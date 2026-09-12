@@ -1,8 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import { getFileType, formatFileSize, moveFile } from '../../src/utils/file-utils.js';
+import {
+  getFileType,
+  formatFileSize,
+  moveFile,
+  getUniqueFilePath,
+} from '../../src/utils/file-utils.js';
 
 describe('File Utils', () => {
   describe('getFileType', () => {
@@ -123,6 +128,72 @@ describe('File Utils', () => {
       await expect(
         moveFile(path.join(dir, 'missing.txt'), path.join(dir, 'out.txt'))
       ).rejects.toThrow();
+    });
+
+    it('rethrows a codeless error whose message is not a dest conflict', async () => {
+      const src = path.join(dir, 'a.txt');
+      await fs.writeFile(src, 'x');
+      // fs-extra's conflict error has no code, so the message is checked too —
+      // an unrelated codeless failure must not be swallowed as a re-home.
+      vi.spyOn(fs, 'move').mockRejectedValueOnce(new Error('EACCES: permission denied'));
+
+      await expect(moveFile(src, path.join(dir, 'b.txt'))).rejects.toThrow('EACCES');
+      vi.restoreAllMocks();
+    });
+  });
+
+  describe('getUniqueFilePath', () => {
+    let dir: string;
+
+    beforeEach(async () => {
+      dir = await fs.mkdtemp(path.join(os.tmpdir(), 'fo-unique-'));
+    });
+
+    afterEach(async () => {
+      await fs.remove(dir);
+    });
+
+    it('returns the path unchanged when nothing is there', async () => {
+      const dest = path.join(dir, 'free.txt');
+      expect(await getUniqueFilePath(dest, 'rename')).toBe(dest);
+    });
+
+    it('returns the dest for overwrite and null for skip when occupied', async () => {
+      const dest = path.join(dir, 'taken.txt');
+      await fs.writeFile(dest, 'x');
+
+      expect(await getUniqueFilePath(dest, 'overwrite')).toBe(dest);
+      expect(await getUniqueFilePath(dest, 'skip')).toBeNull();
+    });
+
+    it('re-homes an occupied destination under the rename resolution', async () => {
+      const dest = path.join(dir, 'taken.txt');
+      await fs.writeFile(dest, 'x');
+
+      expect(await getUniqueFilePath(dest, 'rename')).toBe(path.join(dir, 'taken (1).txt'));
+    });
+
+    it('newest without a source path falls back to a unique name', async () => {
+      const dest = path.join(dir, 'taken.txt');
+      await fs.writeFile(dest, 'x');
+
+      expect(await getUniqueFilePath(dest, 'newest')).toBe(path.join(dir, 'taken (1).txt'));
+    });
+
+    it('newest compares mtimes when a source path is given', async () => {
+      const dest = path.join(dir, 'dest.txt');
+      const srcNewer = path.join(dir, 'newer.txt');
+      const srcOlder = path.join(dir, 'older.txt');
+      await fs.writeFile(dest, 'x');
+      await fs.writeFile(srcNewer, 'x');
+      await fs.writeFile(srcOlder, 'x');
+      const now = Date.now();
+      await fs.utimes(dest, new Date(now - 120_000), new Date(now - 120_000));
+      await fs.utimes(srcNewer, new Date(now), new Date(now));
+      await fs.utimes(srcOlder, new Date(now - 600_000), new Date(now - 600_000));
+
+      expect(await getUniqueFilePath(dest, 'newest', srcNewer)).toBe(dest);
+      expect(await getUniqueFilePath(dest, 'newest', srcOlder)).toBeNull();
     });
   });
 });

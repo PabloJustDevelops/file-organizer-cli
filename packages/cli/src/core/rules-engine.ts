@@ -166,9 +166,6 @@ export class RulesEngine {
       case 'date': {
         return isDateInRange(file.modifiedAt, condition.after, condition.before);
       }
-
-      default:
-        return true;
     }
   }
 

@@ -22,13 +22,13 @@ export default defineConfig({
       // Ratchet (ADR-0006, Constitution Art. IV): set just under the current
       // global numbers so new uncovered code fails CI instead of silently
       // lowering the bar. Raise these as coverage improves — never lower them.
-      // 2026-09-11: actuals 98.55 / 95.54 / 100 / 98.55 after the cycle-2
-      // branch-coverage pass; raised from 90 across the board.
+      // 2026-09-12: all four metrics at 100% on the included surface
+      // (core/**, utils/**, config/loader.ts) after the branch-coverage pass.
       thresholds: {
-        statements: 96,
-        branches: 93,
-        functions: 98,
-        lines: 96,
+        statements: 100,
+        branches: 100,
+        functions: 100,
+        lines: 100,
       },
     },
   },

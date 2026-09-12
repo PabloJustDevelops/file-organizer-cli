@@ -21,22 +21,38 @@ and the orphan landing tasks archived.
 Remaining from the standing objective: publish `0.1.0-rc.1` (blocked on a token
 with Bypass 2FA).
 
-## Post-cycle hardening (2026-09-11)
+## Post-cycle hardening (2026-09-12)
 
-A branch-coverage pass after the three modules merged, and the ratchet it
-enabled (ADR-0006 rule 2):
+Branch-coverage pass after the three modules merged, driven to **100%** on the
+gate surface (`src/core/**`, `src/utils/**`, `src/config/loader.ts`) and locked
+there per ADR-0006 rule 2.
 
-- Coverage: statements 93.57 → **98.55**, branches 91.59 → **95.55**,
-  functions → **100**, lines 95.62 → **98.55**; thresholds raised 90 → 96/93/98/96.
-- Tests added for previously unexercised behavior: the `date` condition and
+- Coverage: statements 93.57 → **100**, branches 91.59 → **100**,
+  functions → **100**, lines 95.62 → **100**; thresholds raised 90 → 100.
+- Tests added for behavior that shipped unexercised: the `date` condition and
   `maxSize`, literal (non-glob) patterns, invalid locale tags and `sizeBuckets`,
-  full-timestamp date bounds, the watcher's event coalescing / `stop()` timer
-  clearing / learned-destination predicate, and `organize` backup bookkeeping.
-- **Two latent defects found while measuring:**
+  full-timestamp date bounds, `getUniqueFilePath` across every resolution
+  (including `newest` mtime comparison), the watcher's event coalescing /
+  `stop()` timer clearing / learned-destination predicate, absolute and
+  same-as-source destinations, per-file move and revert failures, `afterOrganize`
+  hook errors, plugin-rule conflict reporting, the scanner's unreadable-file
+  skip, and the history store's corrupt-file quarantine.
+- **Four latent defects found while measuring:**
   - `moveFile`'s documented TOCTOU fallback was dead — `fs-extra`'s
     "dest already exists." error carries no `code`, so the `EEXIST`/`EPERM`
     check never matched and the run failed instead of re-homing the file.
   - `copyFile` was dead code (no callers, not exported publicly); removed.
+  - `organize()` ignored `config.conflictResolution` — only the flat option was
+    read, so library callers silently got `rename` while the adapters got the
+    configured resolution.
+  - One caught-error site inlined its own `instanceof Error` check, shadowing
+    the shared helper and making its non-`Error` fallback unreachable.
+- Dead branches removed rather than contrived around: the exhaustive
+  rule-condition `switch` default (an unknown type now fails closed), the
+  nullish fallbacks on `split()[0]` (never nullish), and the watcher's
+  unreachable `parent === dir` guard. Caught-error reporting now goes through
+  one `errorMessage(err)` helper, so the non-`Error` fallback is tested once
+  instead of being untestable in every file.
 
 ## Why a map
 

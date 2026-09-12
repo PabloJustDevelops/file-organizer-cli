@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FolderWatcher } from '../../src/core/watcher.js';
+import path from 'path';
+import { FolderWatcher, buildDestinationIgnores } from '../../src/core/watcher.js';
 import type { Organizer } from '../../src/core/organizer.js';
+import type { Rule } from '../../src/types/index.js';
 
 /**
  * A fake chokidar gives deterministic control over the events `FolderWatcher`
@@ -41,6 +43,25 @@ const emit = (event: string) => {
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+describe('buildDestinationIgnores', () => {
+  const rule = (destination: string): Rule => ({
+    name: destination,
+    patterns: ['*'],
+    destination,
+  });
+
+  it('derives one glob per static destination root and skips the unusable ones', () => {
+    expect(
+      buildDestinationIgnores([
+        rule(path.resolve('outside-the-tree')), // absolute → outside the watch
+        rule('./'), // no usable segment
+        rule('././x'), // resolves to "." before any name
+        rule('./images/{year}'), // static root is "images"
+      ])
+    ).toEqual(['**/images/**']);
+  });
+});
 
 describe('FolderWatcher lifecycle (mocked chokidar)', () => {
   const organizer = {

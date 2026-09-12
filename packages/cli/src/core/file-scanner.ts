@@ -3,6 +3,7 @@ import type { FileInfo } from '../types/index.js';
 import { getFileInfo, listFiles } from '../utils/file-utils.js';
 import { RulesEngine } from './rules-engine.js';
 import { logger } from '../utils/logger.js';
+import { errorMessage } from '../utils/errors.js';
 
 export interface ScanOptions {
   patterns?: string[];
@@ -65,7 +66,7 @@ export class FileScanner {
         const info = await getFileInfo(filePath);
         files.push(info);
       } catch (err) {
-        logger.warn(`Could not read file: ${filePath} (${(err as Error).message})`);
+        logger.warn(`Could not read file: ${filePath} (${errorMessage(err)})`);
       }
     }
 

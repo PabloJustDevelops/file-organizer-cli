@@ -79,6 +79,41 @@ describe('RulesEngine', () => {
       expect(engine.matchFile(createFile('my-screenshot-2024', 'png'))).toBeTruthy();
       expect(engine.matchFile(createFile('holiday', 'png'))).toBeNull();
     });
+
+    it('matches a composite glob against a file with no extension', () => {
+      const rule: Rule = {
+        name: 'Composite',
+        patterns: ['*.tar.gz'],
+        destination: './composite',
+      };
+      engine.setRules([rule]);
+
+      expect(engine.matchFile(createFile('archive.tar', 'gz'))).toBeTruthy();
+      // extension-less file exercises the fullName fallback
+      expect(engine.matchFile(createFile('noext', ''))).toBeNull();
+    });
+  });
+
+  describe('Rule ordering', () => {
+    it('sorts mixed explicit and default priorities without dropping rules', () => {
+      engine.addRule({ name: 'NoPrioA', patterns: ['*.txt'], destination: './a' });
+      engine.addRule({ name: 'NoPrioB', patterns: ['*.txt'], destination: './b' });
+      engine.addRule({ name: 'High', patterns: ['*.txt'], destination: './c', priority: 10 });
+      engine.addRule({ name: 'Zero', patterns: ['*.txt'], destination: './d', priority: 0 });
+
+      expect(engine.getRules().map((r) => r.name)).toEqual([
+        'High',
+        'NoPrioA',
+        'NoPrioB',
+        'Zero',
+      ]);
+    });
+  });
+
+  describe('Template warnings', () => {
+    it('returns nothing for a template with no tokens', () => {
+      expect(engine.getTemplateWarnings('./plain/path')).toEqual([]);
+    });
   });
 
   describe('Priority handling', () => {
@@ -233,6 +268,32 @@ describe('RulesEngine', () => {
 
       expect(engine.matchFile(createFile('anything', 'txt'))).toBeNull();
     });
+
+    // The two fallbacks below are reachable only through the programmatic API:
+    // validateRuleCore rejects both shapes at config time (SPEC-config-integrity).
+    it('treats a regex condition with no pattern as matching everything', () => {
+      const rule: Rule = {
+        name: 'RegexNoPattern',
+        patterns: ['*'],
+        destination: './x',
+        condition: { type: 'regex' },
+      };
+      engine.setRules([rule]);
+
+      expect(engine.matchFile(createFile('anything', 'txt'))).toBeTruthy();
+    });
+
+    it('treats an extension condition with no extensions as matching everything', () => {
+      const rule: Rule = {
+        name: 'ExtNoList',
+        patterns: ['*'],
+        destination: './x',
+        condition: { type: 'extension' },
+      };
+      engine.setRules([rule]);
+
+      expect(engine.matchFile(createFile('anything', 'txt'))).toBeTruthy();
+    });
   });
 
   describe('Destination variables', () => {
@@ -282,6 +343,41 @@ describe('RulesEngine', () => {
 
       const result = engine.matchFile(createFile('photo', 'jpg'));
       expect(result?.destination).toBe('./2024-03');
+    });
+
+    it('falls back to year-month for an empty {now:} format', () => {
+      const resolved = engine.resolveDestination(createFile('photo', 'jpg'), './{now:}');
+
+      expect(resolved).toMatch(/^\.\/\d{4}-\d{2}$/);
+    });
+
+    it('substitutes an empty string for a capture group that did not participate', () => {
+      const rule: Rule = {
+        name: 'Optional group',
+        patterns: ['*'],
+        destination: './{match2}',
+        condition: { type: 'regex', pattern: '^(x)' },
+      };
+
+      expect(engine.resolveDestination(createFile('xyz', 'txt'), rule.destination, rule)).toBe(
+        './'
+      );
+    });
+
+    it('leaves {match} literal when the only matching rule is disabled', () => {
+      const disabled: Rule = {
+        name: 'Disabled',
+        patterns: ['*'],
+        destination: './x',
+        enabled: false,
+        condition: { type: 'regex', pattern: '^(a)' },
+      };
+      engine.setRules([disabled]);
+
+      // No rule argument → the engine re-derives one, and must skip disabled ones.
+      expect(engine.resolveDestination(createFile('abc', 'txt'), './{match1}')).toBe(
+        './{match1}'
+      );
     });
   });
 

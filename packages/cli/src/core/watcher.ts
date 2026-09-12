@@ -3,6 +3,7 @@ import path from 'path';
 import type { Organizer } from './organizer.js';
 import type { MovedFile, OrganizeResult, Rule } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { errorMessage } from '../utils/errors.js';
 
 export interface WatcherOptions {
   ignorePatterns?: string[];
@@ -39,8 +40,9 @@ export function buildDestinationIgnores(rules: Rule[]): string[] {
 
   for (const rule of rules) {
     if (path.isAbsolute(rule.destination)) continue;
-    const segment =
-      relativeDestination(rule.destination).split(/[/\\]/)[0]?.split('{')[0] ?? '';
+    // split() always yields at least one element, so `[0]` is never nullish —
+    // only the resulting segment can be empty (or ".").
+    const segment = relativeDestination(rule.destination).split(/[/\\]/)[0].split('{')[0];
     if (segment && segment !== '.') segments.add(segment);
   }
 
@@ -156,11 +158,11 @@ export class FolderWatcher {
     const root = path.resolve(this.sourceDir);
     for (const file of moved) {
       let dir = path.resolve(path.dirname(file.to));
+      // Terminates: every dir satisfying the test has at least one character
+      // after `root + sep`, so dirname strictly shortens it.
       while (dir !== root && dir.startsWith(root + path.sep)) {
         this.learnedDirs.add(dir);
-        const parent = path.dirname(dir);
-        if (parent === dir) break;
-        dir = parent;
+        dir = path.dirname(dir);
       }
     }
   }
@@ -219,7 +221,7 @@ export class FolderWatcher {
         logger.info(`[watch] Organized ${result.moved.length} files`);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = errorMessage(err);
       logger.error(`[watch] Organization error: ${message}`);
     } finally {
       this.isOrganizing = false;
