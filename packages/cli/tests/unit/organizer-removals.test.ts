@@ -80,4 +80,16 @@ describe('Organizer removals (dedup backup)', () => {
     expect(organizer.getScanner()).toBeInstanceOf(FileScanner);
     expect(organizer.getHistoryFilePath()).toContain('history.json');
   });
+
+  it('clearHistory empties the in-memory and persisted history', async () => {
+    const organizer = new Organizer({ historyDir });
+    await organizer.recordRemovals([{ from: '/a', to: '/b', rule: 'dedup' }]);
+    expect(await organizer.getHistory()).toHaveLength(1);
+
+    await organizer.clearHistory();
+
+    expect(await organizer.getHistory()).toEqual([]);
+    const reloaded = new Organizer({ historyDir });
+    expect(await reloaded.getHistory()).toEqual([]);
+  });
 });

@@ -21,6 +21,23 @@ and the orphan landing tasks archived.
 Remaining from the standing objective: publish `0.1.0-rc.1` (blocked on a token
 with Bypass 2FA).
 
+## Post-cycle hardening (2026-09-11)
+
+A branch-coverage pass after the three modules merged, and the ratchet it
+enabled (ADR-0006 rule 2):
+
+- Coverage: statements 93.57 → **98.55**, branches 91.59 → **95.55**,
+  functions → **100**, lines 95.62 → **98.55**; thresholds raised 90 → 96/93/98/96.
+- Tests added for previously unexercised behavior: the `date` condition and
+  `maxSize`, literal (non-glob) patterns, invalid locale tags and `sizeBuckets`,
+  full-timestamp date bounds, the watcher's event coalescing / `stop()` timer
+  clearing / learned-destination predicate, and `organize` backup bookkeeping.
+- **Two latent defects found while measuring:**
+  - `moveFile`'s documented TOCTOU fallback was dead — `fs-extra`'s
+    "dest already exists." error carries no `code`, so the `EEXIST`/`EPERM`
+    check never matched and the run failed instead of re-homing the file.
+  - `copyFile` was dead code (no callers, not exported publicly); removed.
+
 ## Why a map
 
 Cycle 1 made the CLI installable, honest to scripts, and safe to mutate with.

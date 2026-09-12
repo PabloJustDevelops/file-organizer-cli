@@ -248,6 +248,28 @@ describe('Config Loader', () => {
       expect(getExampleConfig().recursive).toBe(false);
     });
 
+    it('rejects a structurally invalid locale tag (Intl throws)', () => {
+      expect(() => validateAndNormalizeConfig({ rules: [], locale: 'en_US' })).toThrow(
+        'is not a valid BCP-47 locale tag'
+      );
+    });
+
+    it('rejects non-positive sizeBuckets values', () => {
+      for (const bad of [0, -1, 'abc']) {
+        expect(() =>
+          validateAndNormalizeConfig({ rules: [], sizeBuckets: { small: bad } })
+        ).toThrow('sizeBuckets.small must be a positive number of bytes');
+      }
+    });
+
+    it('keeps only the sizeBuckets keys that were provided', () => {
+      const config = validateAndNormalizeConfig({
+        rules: [],
+        sizeBuckets: { medium: 2048 },
+      });
+      expect(config.sizeBuckets).toEqual({ medium: 2048 });
+    });
+
     it('AC-10: the dead condition.match field is gone from the schema', () => {
       const condition = CONFIG_SCHEMA.definitions.condition as {
         properties: Record<string, unknown>;

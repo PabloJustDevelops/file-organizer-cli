@@ -127,20 +127,27 @@ function validateConflictResolution(value: unknown): OrganizeConfig['conflictRes
   return 'rename';
 }
 
-export async function loadAppConfig(): Promise<AppConfig> {
+/**
+ * Global app config (the `conf` store). `cwd` is an optional seam: production
+ * uses the OS config directory, tests pass a temp dir so they never read or
+ * write the developer's real config.
+ */
+export async function loadAppConfig(cwd?: string): Promise<AppConfig> {
   const Conf = (await import('conf')).default;
   const conf = new Conf<{ config: AppConfig }>({
     projectName: 'file-organizer',
+    ...(cwd === undefined ? {} : { cwd }),
     defaults: { config: DEFAULT_CONFIG },
   });
 
   return conf.get('config') as AppConfig;
 }
 
-export async function saveAppConfig(config: AppConfig): Promise<void> {
+export async function saveAppConfig(config: AppConfig, cwd?: string): Promise<void> {
   const Conf = (await import('conf')).default;
   const conf = new Conf<{ config: AppConfig }>({
     projectName: 'file-organizer',
+    ...(cwd === undefined ? {} : { cwd }),
   });
 
   conf.set('config', config);
