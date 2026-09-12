@@ -84,6 +84,26 @@ describe('Overwrite backup + undo', () => {
     expect(history).toHaveLength(1);
     expect(history[0].replaced).toBeUndefined();
   });
+
+  it('undo restores a clobbered file even if the destination was deleted since', async () => {
+    await fs.ensureDir(path.join(testDir, 'images'));
+    await fs.writeFile(path.join(testDir, 'images', 'photo.jpg'), 'PRECIOUS ORIGINAL');
+    await fs.writeFile(path.join(testDir, 'photo.jpg'), 'new incoming');
+
+    const organizer = new Organizer({ historyDir });
+    await organizer.organize(testDir, { config, conflictResolution: 'overwrite' });
+
+    // The user deletes the destination afterwards — the clobbered file still
+    // deserves restoration from its backup.
+    await fs.remove(path.join(testDir, 'images', 'photo.jpg'));
+
+    const result = await organizer.undo();
+
+    expect(result?.errors).toHaveLength(0);
+    expect(
+      await fs.readFile(path.join(testDir, 'images', 'photo.jpg'), 'utf-8')
+    ).toBe('PRECIOUS ORIGINAL');
+  });
 });
 
 describe('Corrupt history handling', () => {

@@ -1,5 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { getFileType, formatFileSize } from '../../src/utils/file-utils.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import fs from 'fs-extra';
+import os from 'os';
+import path from 'path';
+import { getFileType, formatFileSize, moveFile } from '../../src/utils/file-utils.js';
 
 describe('File Utils', () => {
   describe('getFileType', () => {
@@ -76,6 +79,50 @@ describe('File Utils', () => {
     it('formats gigabytes', () => {
       expect(formatFileSize(1024 * 1024 * 1024)).toBe('1.0 GB');
       expect(formatFileSize(2.5 * 1024 * 1024 * 1024)).toBe('2.5 GB');
+    });
+  });
+
+  describe('moveFile', () => {
+    let dir: string;
+
+    beforeEach(async () => {
+      dir = await fs.mkdtemp(path.join(os.tmpdir(), 'fo-move-'));
+    });
+
+    afterEach(async () => {
+      await fs.remove(dir);
+    });
+
+    it('moves the file and creates missing destination directories', async () => {
+      const src = path.join(dir, 'a.txt');
+      await fs.writeFile(src, 'hello');
+      const dest = path.join(dir, 'nested', 'deep', 'a.txt');
+
+      await moveFile(src, dest);
+
+      expect(await fs.readFile(dest, 'utf-8')).toBe('hello');
+      expect(await fs.pathExists(src)).toBe(false);
+    });
+
+    it('falls back to a unique name when the destination appeared first (TOCTOU)', async () => {
+      const src = path.join(dir, 'src.txt');
+      const dest = path.join(dir, 'dest.txt');
+      await fs.writeFile(src, 'incoming');
+      await fs.writeFile(dest, 'already here');
+
+      // overwrite:false onto an existing file throws EEXIST; the run must not
+      // fail — it re-homes the file under a unique name instead.
+      await moveFile(src, dest, { overwrite: false });
+
+      expect(await fs.readFile(dest, 'utf-8')).toBe('already here');
+      expect(await fs.readFile(path.join(dir, 'dest (1).txt'), 'utf-8')).toBe('incoming');
+      expect(await fs.pathExists(src)).toBe(false);
+    });
+
+    it('rethrows errors that are not a destination conflict', async () => {
+      await expect(
+        moveFile(path.join(dir, 'missing.txt'), path.join(dir, 'out.txt'))
+      ).rejects.toThrow();
     });
   });
 });

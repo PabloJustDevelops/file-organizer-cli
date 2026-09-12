@@ -45,6 +45,7 @@ First public release candidate — not yet published to npm.
 ### Removed
 
 - The unused `condition.match` field (accepted but never read).
+- The unused `copyFile` helper (no callers, not part of the public API).
 
 ### Fixed
 
@@ -52,5 +53,8 @@ First public release candidate — not yet published to npm.
   history, so `fo undo` restores them.
 - `prepublishOnly` runs the vitest suite instead of Bun's built-in test runner.
 - Publishing a prerelease no longer fails for a missing dist-tag.
+- The move fallback that re-homes a file under a unique name now actually
+  triggers: `fs-extra`'s "dest already exists." error carries no `code`, so the
+  `EEXIST`/`EPERM` check never matched and the run failed instead of recovering.
 
 [0.1.0]: https://github.com/PabloJustDevelops/file-organizer-cli/releases

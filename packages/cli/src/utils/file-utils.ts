@@ -99,7 +99,13 @@ export async function moveFile(src: string, dest: string, options: { overwrite?:
     await fs.move(src, dest, { overwrite: options.overwrite === true });
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
-    if (!options.overwrite && (code === 'EEXIST' || code === 'EPERM')) {
+    // fs-extra's "dest already exists." error carries NO code, so keying only on
+    // EEXIST/EPERM left this fallback dead and failed the whole run instead.
+    const isConflict =
+      code === 'EEXIST' ||
+      code === 'EPERM' ||
+      (code === undefined && /dest already exists/i.test((err as Error).message ?? ''));
+    if (!options.overwrite && isConflict) {
       // TOCTOU: destination appeared between getUniqueFilePath and move.
       // Fall back to a fresh unique name instead of failing the whole run.
       const fallback = await generateUniqueName(dest);
@@ -108,11 +114,6 @@ export async function moveFile(src: string, dest: string, options: { overwrite?:
     }
     throw err;
   }
-}
-
-export async function copyFile(src: string, dest: string): Promise<void> {
-  await ensureDirectory(path.dirname(dest));
-  await fs.copy(src, dest, { overwrite: false });
 }
 
 export function getFileType(extension: string): string {

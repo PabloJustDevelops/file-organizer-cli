@@ -68,6 +68,17 @@ describe('RulesEngine', () => {
       expect(engine.matchFile(createFile('engraphis.db.backup-1.5', '5'))).toBeTruthy();
       expect(engine.matchFile(createFile('engraphis.db', 'db'))).toBeNull();
     });
+    it('matches a literal pattern with no wildcard', () => {
+      const rule: Rule = {
+        name: 'Literal',
+        patterns: ['screenshot'],
+        destination: './literal',
+      };
+      engine.setRules([rule]);
+
+      expect(engine.matchFile(createFile('my-screenshot-2024', 'png'))).toBeTruthy();
+      expect(engine.matchFile(createFile('holiday', 'png'))).toBeNull();
+    });
   });
 
   describe('Priority handling', () => {
@@ -153,6 +164,74 @@ describe('RulesEngine', () => {
       engine.setRules([rule]);
 
       expect(engine.matchFile(createFile('big', 'zip'))).toBeNull();
+    });
+
+    it('matches when the file is above minSize', () => {
+      const rule: Rule = {
+        name: 'Not tiny',
+        patterns: ['*'],
+        destination: './not-tiny',
+        condition: { type: 'size', minSize: 500 },
+      };
+      engine.setRules([rule]);
+
+      expect(engine.matchFile(createFile('file', 'txt'))).toBeTruthy();
+    });
+
+    it('honors maxSize in both directions', () => {
+      const small: Rule = {
+        name: 'Small',
+        patterns: ['*'],
+        destination: './small',
+        condition: { type: 'size', maxSize: 2000 },
+      };
+      engine.setRules([small]);
+      expect(engine.matchFile(createFile('fits', 'txt'))).toBeTruthy();
+
+      const tiny: Rule = {
+        name: 'Tiny',
+        patterns: ['*'],
+        destination: './tiny',
+        condition: { type: 'size', maxSize: 500 },
+      };
+      engine.setRules([tiny]);
+      expect(engine.matchFile(createFile('too-big', 'txt'))).toBeNull();
+    });
+
+    it('matches a date condition inside the range (inclusive days)', () => {
+      const rule: Rule = {
+        name: 'March',
+        patterns: ['*'],
+        destination: './march',
+        condition: { type: 'date', after: '2024-03-01', before: '2024-03-31' },
+      };
+      engine.setRules([rule]);
+
+      expect(engine.matchFile(createFile('inside', 'txt'))).toBeTruthy();
+    });
+
+    it('rejects a date condition when the file is outside the range', () => {
+      const rule: Rule = {
+        name: 'Older than March',
+        patterns: ['*'],
+        destination: './old',
+        condition: { type: 'date', before: '2024-01-01' },
+      };
+      engine.setRules([rule]);
+
+      expect(engine.matchFile(createFile('outside', 'txt'))).toBeNull();
+    });
+
+    it('fails closed when a date bound is unparseable', () => {
+      const rule: Rule = {
+        name: 'Bad bound',
+        patterns: ['*'],
+        destination: './x',
+        condition: { type: 'date', after: 'nope' },
+      };
+      engine.setRules([rule]);
+
+      expect(engine.matchFile(createFile('anything', 'txt'))).toBeNull();
     });
   });
 
@@ -250,6 +329,79 @@ describe('RulesEngine', () => {
         destination: './images',
       });
       expect(errors).toHaveLength(0);
+    });
+
+    it('flags a regex condition without a pattern', () => {
+      const errors = engine.validateRule({
+        name: 'R',
+        patterns: ['*'],
+        destination: './x',
+        condition: { type: 'regex' },
+      });
+      expect(errors).toContain('Regex condition requires a pattern');
+    });
+
+    it('flags an extension condition without extensions', () => {
+      const errors = engine.validateRule({
+        name: 'R',
+        patterns: ['*'],
+        destination: './x',
+        condition: { type: 'extension' },
+      });
+      expect(errors).toContain('Extension condition requires extensions array');
+    });
+
+    it('accepts a fully specified condition', () => {
+      const errors = engine.validateRule({
+        name: 'R',
+        patterns: ['*'],
+        destination: './x',
+        condition: { type: 'regex', pattern: '^a' },
+      });
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  describe('Capture groups ({match})', () => {
+    const captureRule: Rule = {
+      name: 'Projects',
+      patterns: ['*'],
+      destination: './projects',
+      condition: { type: 'regex', pattern: '(project\\d+)' },
+    };
+
+    it('derives the capture from the matching rule when none is passed', () => {
+      engine.setRules([captureRule]);
+
+      expect(engine.resolveDestination(createFile('project42', 'jpg'), './out/{match1}')).toBe(
+        './out/project42'
+      );
+    });
+
+    it('supports the bare {match} form (whole match)', () => {
+      engine.setRules([captureRule]);
+
+      expect(engine.resolveDestination(createFile('project42', 'jpg'), './out/{match}')).toBe(
+        './out/project42'
+      );
+    });
+
+    it('leaves the token literal when no rule matches the file', () => {
+      engine.setRules([]);
+
+      expect(engine.resolveDestination(createFile('x', 'jpg'), './out/{match1}')).toBe(
+        './out/{match1}'
+      );
+    });
+
+    it('leaves the token literal when the pattern does not match the name', () => {
+      engine.setRules([
+        { ...captureRule, condition: { type: 'regex', pattern: '(nomatch\\d+)' } },
+      ]);
+
+      expect(engine.resolveDestination(createFile('other', 'jpg'), './out/{match1}')).toBe(
+        './out/{match1}'
+      );
     });
   });
 });

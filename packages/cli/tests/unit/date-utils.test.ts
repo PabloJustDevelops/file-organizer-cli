@@ -51,6 +51,12 @@ describe('Date Utils', () => {
       expect(isDateInRange(date, 'not-a-date')).toBe(false);
       expect(isDateInRange(date, undefined, 'also-not-a-date')).toBe(false);
     });
+
+    it('accepts full timestamps as bounds (non date-only form)', () => {
+      expect(isDateInRange(date, '2024-03-15T00:00:00')).toBe(true);
+      expect(isDateInRange(date, undefined, '2024-03-15T23:59:59')).toBe(true);
+      expect(isDateInRange(date, '2024-03-15T23:59:59')).toBe(false);
+    });
   });
 
   describe('formatDate', () => {
