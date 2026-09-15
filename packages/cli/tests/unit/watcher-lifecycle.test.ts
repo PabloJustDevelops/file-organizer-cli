@@ -3,6 +3,7 @@ import path from 'path';
 import { FolderWatcher, buildDestinationIgnores } from '../../src/core/watcher.js';
 import type { Organizer } from '../../src/core/organizer.js';
 import type { Rule } from '../../src/types/index.js';
+import { logger } from '../../src/utils/logger.js';
 
 /**
  * A fake chokidar gives deterministic control over the events `FolderWatcher`
@@ -36,10 +37,10 @@ vi.mock('chokidar', () => ({
   },
 }));
 
-const emit = (event: string) => {
+const emit = (event: string, ...args: unknown[]) => {
   const handler = mocks.handlers.get(event);
   if (!handler) throw new Error(`no handler registered for "${event}"`);
-  handler();
+  handler(...args);
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -104,6 +105,29 @@ describe('FolderWatcher lifecycle (mocked chokidar)', () => {
     await sleep(120);
     expect(mocks.organize).toHaveBeenCalledTimes(1);
     expect(mocks.close).toHaveBeenCalled();
+  });
+
+  it('logs a chokidar watcher error instead of crashing', async () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+    const watcher = new FolderWatcher(organizer, '/source', { organizeOnStart: false });
+
+    const started = watcher.start();
+    emit('ready');
+    await started;
+
+    emit('error', new Error('EMFILE: too many open files'));
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[watch] Watcher error: EMFILE: too many open files')
+    );
+    await watcher.stop();
+  });
+
+  it('stop() is a no-op when the watcher was never started', async () => {
+    const watcher = new FolderWatcher(organizer, '/source', { organizeOnStart: false });
+
+    await expect(watcher.stop()).resolves.toBeUndefined();
+    expect(mocks.close).not.toHaveBeenCalled();
   });
 
   it('runs the initial pass on ready when organizeOnStart is set', async () => {

@@ -104,6 +104,51 @@ describe('Overwrite backup + undo', () => {
       await fs.readFile(path.join(testDir, 'images', 'photo.jpg'), 'utf-8')
     ).toBe('PRECIOUS ORIGINAL');
   });
+
+  it('undo skips restoring the clobbered file when its backup is gone but the destination still exists', async () => {
+    await fs.ensureDir(path.join(testDir, 'images'));
+    await fs.writeFile(path.join(testDir, 'images', 'photo.jpg'), 'PRECIOUS ORIGINAL');
+    await fs.writeFile(path.join(testDir, 'photo.jpg'), 'new incoming');
+
+    const organizer = new Organizer({ historyDir });
+    await organizer.organize(testDir, { config, conflictResolution: 'overwrite' });
+
+    // The backup itself is gone (e.g. the user cleared the backup store by
+    // hand) — undo still returns the incoming file home, but cannot restore
+    // the clobbered original since there is nothing left to restore it from.
+    const backupDir = path.join(historyDir, 'replaced');
+    const backupFiles = await fs.readdir(backupDir);
+    expect(backupFiles).toHaveLength(1);
+    await fs.remove(path.join(backupDir, backupFiles[0]));
+
+    const result = await organizer.undo();
+
+    expect(result?.errors).toHaveLength(0);
+    expect(await fs.readFile(path.join(testDir, 'photo.jpg'), 'utf-8')).toBe('new incoming');
+    expect(await fs.pathExists(path.join(testDir, 'images', 'photo.jpg'))).toBe(false);
+  });
+
+  it('undo does not attempt to restore a clobbered file when both the destination and its backup are gone', async () => {
+    await fs.ensureDir(path.join(testDir, 'images'));
+    await fs.writeFile(path.join(testDir, 'images', 'photo.jpg'), 'PRECIOUS ORIGINAL');
+    await fs.writeFile(path.join(testDir, 'photo.jpg'), 'new incoming');
+
+    const organizer = new Organizer({ historyDir });
+    await organizer.organize(testDir, { config, conflictResolution: 'overwrite' });
+
+    // Both the moved-in file and the backup of the file it replaced are gone
+    // by the time undo runs — nothing left to restore, and no error either.
+    await fs.remove(path.join(testDir, 'images', 'photo.jpg'));
+    const backupDir = path.join(historyDir, 'replaced');
+    const backupFiles = await fs.readdir(backupDir);
+    await fs.remove(path.join(backupDir, backupFiles[0]));
+
+    const result = await organizer.undo();
+
+    expect(result?.errors).toHaveLength(0);
+    expect(result?.moved).toHaveLength(0);
+    expect(await fs.pathExists(path.join(testDir, 'images', 'photo.jpg'))).toBe(false);
+  });
 });
 
 describe('Corrupt history handling', () => {

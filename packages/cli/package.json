@@ -72,11 +72,12 @@
     "@types/inquirer": "^9.0.0",
     "@types/node": "^20.0.0",
     "@types/react": "^19.3.0",
-    "@vitest/coverage-v8": "^1.6.1",
+    "@vitest/coverage-v8": "^5.0.1",
     "memfs": "^4.78.0",
     "oxlint": "^1.83.0",
     "tsup": "^8.5.1",
-    "vitest": "^1.6.1"
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
   },
   "engines": {
     "node": ">=18.0.0"

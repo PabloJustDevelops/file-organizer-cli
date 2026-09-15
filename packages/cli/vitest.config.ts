@@ -6,6 +6,18 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    // vitest 5's per-worker startup (fresh Vite server per isolated test
+    // file) adds real time on top of the e2e tests that spawn a subprocess
+    // (built binary, `npm pack`/`npm install`). Measured on this machine
+    // (vitest 5.0.1 + vite 8.3.0, default fileParallelism): the slowest cases
+    // are tests/e2e/safe-mutations.test.ts's dedup/undo round-trip at ~16.1s,
+    // tests/e2e/install.test.ts's tarball install smoke at ~11.4s, and
+    // tests/integration/packaging.test.ts's `npm pack` at ~8.7s — all above
+    // the 5s default but nowhere near this ceiling, so raising it is not
+    // masking a hang. `fileParallelism: false` was tried and made the whole
+    // suite ~2.5x slower (114s vs 47s) without shortening the slow tests
+    // (each still runs alone), so a single serialized run buys nothing.
+    testTimeout: 20000,
     // E2E drives the built binary, so build it once before the suite runs.
     globalSetup: ['./tests/e2e/global-setup.ts'],
     coverage: {
