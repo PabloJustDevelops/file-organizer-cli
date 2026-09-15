@@ -31,6 +31,29 @@ inspectable, and validated **before** anything moves (Constitution Art. VI):
 6. All three commands exit 1 on failure (missing/invalid config) and 0 on
    success; `show`/`validate` do not import plugins.
 
+## 3a. `AppConfig.logLevel` (the global app config, not the YAML)
+
+`AppConfig` (persisted via `conf`, read/written by `loadAppConfig`/
+`saveAppConfig`) carries a `logLevel` field, separate from the per-project
+YAML config above. It sets the CLI's default log verbosity when no explicit
+flag is given.
+
+1. The CLI entry's shared `preAction` hook (`src/cli/index.ts`) resolves the
+   effective log level for every command in this order:
+   1. `--verbose` → `debug`.
+   2. `--quiet` → `error`.
+   3. Neither flag → the persisted `AppConfig.logLevel` (`loadAppConfig()`),
+      which itself defaults to `info` (`DEFAULT_CONFIG.logLevel`).
+2. This resolution happens **before** each command's own action runs. A
+   command that then forces its own level — `organize`/`rules list`/
+   `config show` under `--json` (SPEC-cli-contract), and `fo mcp` — still
+   wins, because those calls happen later, inside the action itself.
+3. There is currently no CLI surface to *set* `AppConfig.logLevel` (no
+   `fo config set`, per the Non-goals above); it is only writable
+   programmatically via `saveAppConfig`, or by editing the `conf` store file
+   directly. Until such a surface exists, this option is reachable but not
+   yet user-facing through a command.
+
 ## 4. Acceptance criteria
 
 | ID   | Given | When | Then | Test |
@@ -43,6 +66,10 @@ inspectable, and validated **before** anything moves (Constitution Art. VI):
 | AC-6 | `recursive` omitted | `validateAndNormalizeConfig` | `recursive === false` | `tests/unit/config-loader.test.ts` |
 | AC-7 | every shipped example | `validateAndNormalizeConfig` | all validate | `tests/unit/config-loader.test.ts` |
 | AC-8 | a config with `plugins` | `loadConfig` | structure validated; plugins never imported at validate time | `tests/unit/config-loader.test.ts` |
+| C1 | no `--verbose`/`--quiet` | any command runs | the effective log level is `AppConfig.logLevel` | `tests/unit/cli-index.test.ts` |
+| C2 | `AppConfig.logLevel` set to a non-default value | `--verbose` or `--quiet` is also given | the flag wins | `tests/unit/cli-index.test.ts` |
+| C3 | `AppConfig.logLevel` set to a non-default value | `organize --json` / `rules list --json` / `config show --json` / `fo mcp` | the command still forces `error` (unchanged from SPEC-cli-contract) | `tests/unit/cli-organize-command.test.ts`, `tests/unit/cli-mcp-command.test.ts` |
+| C4 | `DEFAULT_CONFIG` | inspecting `logLevel` | still defaults to `'info'` (unchanged) | `tests/unit/config-loader.test.ts` |
 
 ## 5. Adapter mapping
 
@@ -50,9 +77,12 @@ inspectable, and validated **before** anything moves (Constitution Art. VI):
 |----------|-----|-----|
 | Validate | `fo config validate` | — (rules validated on `add_rule`) |
 | Show | `fo config show [--json]` | `list_rules` |
+| Default log level | `preAction` hook, all commands | not applicable (MCP always forces `error`) |
 
 ## 6. Boundaries
 
 - **Always:** validate before any file moves; actionable errors naming the rule
-  and index; `validate` stays offline (never imports plugins).
-- **Never:** accept a config the loader would reject at organize time.
+  and index; `validate` stays offline (never imports plugins); `--verbose`/
+  `--quiet` win over the persisted `AppConfig.logLevel`.
+- **Never:** accept a config the loader would reject at organize time; let
+  `AppConfig.logLevel` override `--json`'s or `fo mcp`'s forced `error` level.

@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import fs from 'fs-extra';
 import path from 'path';
 import { cliTestContext } from './cli-harness.js';
 import type { Command } from 'commander';
+import type { AppConfig } from '../../src/types/index.js';
 
 /**
  * SPEC-adapter-coverage AC-9: `src/cli/index.ts` at 100%.
@@ -21,6 +22,17 @@ interface GlobalOptions {
 }
 
 const ctx = cliTestContext('cli-index');
+
+/** Stub the persisted app config's `logLevel` for the preAction hook (SPEC-config C4). */
+function stubAppConfigLogLevel(logLevel: AppConfig['logLevel']): void {
+  vi.doMock('../../src/config/loader.js', () => ({
+    loadAppConfig: async () => ({ logLevel }),
+  }));
+}
+
+afterEach(() => {
+  vi.doUnmock('../../src/config/loader.js');
+});
 
 async function loadCliEntry() {
   vi.resetModules();
@@ -70,27 +82,55 @@ describe('the CLI entrypoint', () => {
   });
 
   it('applies --verbose, --quiet and --log-file through the preAction hook', async () => {
+    stubAppConfigLogLevel('info');
     const { hookSpy } = await loadCliEntry();
     const logger = await import('../../src/utils/logger.js');
 
     const hookCall = hookSpy.mock.calls.find((call) => call[0] === 'preAction');
     expect(hookCall, 'no preAction hook was registered').toBeDefined();
-    const hook = hookCall?.[1] as (command: { opts: () => GlobalOptions }) => void;
+    const hook = hookCall?.[1] as (command: { opts: () => GlobalOptions }) => Promise<void>;
 
-    hook({ opts: () => ({ verbose: true }) });
+    await hook({ opts: () => ({ verbose: true }) });
     expect(logger.getLogLevel()).toBe('debug');
 
-    hook({ opts: () => ({ quiet: true }) });
-    expect(logger.getLogLevel()).toBe('error');
-
-    hook({ opts: () => ({}) });
+    await hook({ opts: () => ({ quiet: true }) });
     expect(logger.getLogLevel()).toBe('error');
 
     const logFile = path.join(ctx.dir, 'cli.log');
-    hook({ opts: () => ({ logFile }) });
-    // The level is still 'error' from the --quiet case, so log at that level.
+    await hook({ opts: () => ({ logFile }) });
+    // No explicit flag: falls back to the persisted app config, stubbed to 'info' above.
+    expect(logger.getLogLevel()).toBe('info');
     logger.error('routed to the configured file');
     expect(await fs.readFile(logFile, 'utf-8')).toContain('routed to the configured file');
+  });
+
+  it('SPEC-config C4: --verbose/--quiet win over the persisted logLevel', async () => {
+    stubAppConfigLogLevel('error');
+    const { hookSpy } = await loadCliEntry();
+    const logger = await import('../../src/utils/logger.js');
+
+    const hook = hookSpy.mock.calls.find((call) => call[0] === 'preAction')?.[1] as (command: {
+      opts: () => GlobalOptions;
+    }) => Promise<void>;
+
+    await hook({ opts: () => ({ verbose: true }) });
+    expect(logger.getLogLevel()).toBe('debug');
+
+    await hook({ opts: () => ({ quiet: true }) });
+    expect(logger.getLogLevel()).toBe('error');
+  });
+
+  it('SPEC-config C4: no flag applies the persisted app config logLevel', async () => {
+    stubAppConfigLogLevel('debug');
+    const { hookSpy } = await loadCliEntry();
+    const logger = await import('../../src/utils/logger.js');
+
+    const hook = hookSpy.mock.calls.find((call) => call[0] === 'preAction')?.[1] as (command: {
+      opts: () => GlobalOptions;
+    }) => Promise<void>;
+
+    await hook({ opts: () => ({}) });
+    expect(logger.getLogLevel()).toBe('debug');
   });
 
   it('makes `fo init` delegate to `fo config init`', async () => {
