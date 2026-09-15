@@ -41,6 +41,10 @@ First public release candidate — not yet published to npm.
   documents.
 - The CLI entry no longer requires the TUI stack (`react`/`ink`); they load
   lazily, and `react` is a declared dependency so `fo-tui` works anywhere.
+- **The coverage gate now includes the adapter layer.** `src/cli/**` and
+  `src/mcp/**` are measured and enforced at 100% alongside the core, so a
+  regression in a command's error path or flag wiring fails CI instead of
+  shipping (see [ADR-0010](docs/decisions/0010-coverage-surface-adapter-layer.md)).
 
 ### Removed
 
@@ -50,6 +54,10 @@ First public release candidate — not yet published to npm.
   (now exhaustive, so an unknown type fails closed instead of matching
   everything), the nullish fallbacks on `split()[0]` where the value is never
   nullish, and the redundant guard in the watcher's destination walk.
+- The unreachable `pluginBaseDir` ternary in `watch` — the no-config branch
+  returns earlier, so the `undefined` arm could never run — and its unreachable
+  non-`Error` fallback for `--debounce`. Both now use the shared `errorMessage`
+  helper.
 
 ### Fixed
 

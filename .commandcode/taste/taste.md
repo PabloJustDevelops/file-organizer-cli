@@ -11,3 +11,28 @@
 - Values autonomy in testing — prefers giving the agent freedom to explore and verify rather than micromanaging each step. Confidence: 0.8
 - Wants recommendations and rationale before implementation decisions. Confidence: 0.8
 - Works on Windows with PowerShell as the primary shell. Confidence: 0.85
+- Follows Spec-Driven Development (SDD) workflow — capability maps, specs with acceptance criteria, plans, and task breakdowns with review gates before implementation. Confidence: 0.9
+- Prefers E2E tests running against the built binary (dist), included in the default test command, with global setup that rebuilds to guarantee a fresh artifact. Confidence: 0.85
+- Uses exit code 0 for success and 1 for any failure as a simple, predictable convention across CLI tools. Confidence: 0.85
+- `--json` flag should produce pure JSON on stdout (logs to stderr), imply non-interactive mode, and be available on read/compute commands. Confidence: 0.85
+- Prefers Keep a Changelog + SemVer format for changelogs. Confidence: 0.8
+- Does not document unreachable/unimplemented features — avoids repeating the mistake of advertising something that doesn't work yet. Confidence: 0.85
+- Writes technical specs, README, and CHANGELOG in English, but task-level files (plan/todo) in Spanish — bilingual documentation workflow. Confidence: 0.85
+- Values transparency about plan deviations — wants honest notes when implementation diverges from the spec. Confidence: 0.8
+- Prefers scoped npm packages (@scope/name) when the unscoped name is taken. Confidence: 0.75
+- Wants the agent to own the full release pipeline — commit, push, merge, and publish — when authorized, not just make changes. Confidence: 0.85
+- When stopped mid-task, expects the agent to continue autonomously from the last point without restarting the whole workflow or re-explaining context. Confidence: 0.8
+- npm publish scope must match the npm username (not the GitHub handle) — npm only accepts scopes belonging to your account or orgs you belong to. Confidence: 0.9
+- Prefers passkey/FIDO/WebAuthn security keys over TOTP authenticator apps for 2FA. Confidence: 0.75
+- Prefers non-interactive, token-based auth flows (e.g., npm granular access tokens with bypass 2FA) over interactive OTP or web-login prompts for CI/publishing. Confidence: 0.85
+- Defers publishing and deployment tasks to the end of a development cycle — focuses on feature development first, publishes last. Confidence: 0.8
+- Uses `/goal` command to set objectives and drive autonomous spec-driven development loops. Confidence: 0.85
+- Test fixture directories should use a repo-local base rather than `os.tmpdir()` to avoid platform-specific CI failures (e.g., Windows 8.3 short paths breaking ESM imports). Confidence: 0.85
+- Agent should autonomously diagnose and fix CI failures by reading logs and iterating — does not wait for the user to interpret failures or give step-by-step instructions. Confidence: 0.85
+- When discovering dead code during coverage work, deletes it rather than enshrining it with tests — no callers and not in the public API means it goes. Confidence: 0.8
+- Prefers squash-merge for PRs. Confidence: 0.8
+- Commit messages follow Conventional Commits format (`type(scope): description`) in English. Confidence: 0.85
+- Splits large changes into focused, single-purpose PRs rather than bundling unrelated work into one. Confidence: 0.75
+- Prefers deterministic tests (mocks/fakes) for timing-dependent or OS-specific behavior over real filesystem race conditions — keeps the suite reliable on CI. Confidence: 0.8
+- Wants agent to own the full quality pipeline autonomously — lint, test, coverage gate, build, pack verification — before declaring work done, without being asked each time. Confidence: 0.85
+- Approves merges when the agent judges them necessary and asks — trusts the agent's judgment on when a PR is ready to merge. Confidence: 0.8

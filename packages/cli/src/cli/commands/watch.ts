@@ -4,6 +4,7 @@ import { Organizer } from '../../core/organizer.js';
 import { FolderWatcher } from '../../core/watcher.js';
 import { loadConfig, findConfigPath, loadAppConfig } from '../../config/loader.js';
 import { logger } from '../../utils/logger.js';
+import { errorMessage } from '../../utils/errors.js';
 import { fail } from '../ui/output.js';
 
 /**
@@ -32,7 +33,10 @@ export const watchCommand = new Command('watch')
     try {
       debounceMs = parseDebounce(options.debounce);
     } catch (err) {
-      fail(err instanceof Error ? err.message : 'Invalid --debounce value');
+      // `parseDebounce` is local and only ever throws an Error, so the shared
+      // helper's non-Error fallback is not reachable from here — one covered
+      // fallback (utils/errors) instead of an untestable copy per file.
+      fail(errorMessage(err));
       return;
     }
 
@@ -64,7 +68,8 @@ export const watchCommand = new Command('watch')
         organizeOnStart: options.initial !== false,
         conflictResolution: options.conflict || config.conflictResolution || 'rename',
         plugins: config.plugins,
-        pluginBaseDir: configPath ? path.dirname(path.resolve(configPath)) : undefined,
+        // `configPath` is guaranteed truthy here: the no-config branch returned above.
+        pluginBaseDir: path.dirname(path.resolve(configPath)),
       });
 
       await watcher.start();
