@@ -19,6 +19,7 @@ Entries are added in the same change that ships the behavior
   `chalk@6`, `inquirer@14`, and `vitest@5` (already adopted) all require
   Node 22 anyway (see
   [ADR-0011](docs/decisions/0011-node-22-baseline.md)).
+- `chalk` 5 → 6.
 
 ## [0.1.0] - unreleased
 
