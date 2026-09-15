@@ -63,18 +63,18 @@
     "ink": "^7.1.1",
     "inquirer": "^9.2.0",
     "ora": "^8.0.0",
-    "react": "^19.2.0",
-    "yaml": "^2.4.0"
+    "react": "^19.3.0",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
-    "@oxlint/plugins": "^1.81.0",
+    "@oxlint/plugins": "^1.83.0",
     "@types/fs-extra": "^11.0.0",
     "@types/inquirer": "^9.0.0",
     "@types/node": "^20.0.0",
-    "@types/react": "^19.2.18",
+    "@types/react": "^19.3.0",
     "@vitest/coverage-v8": "^1.6.1",
-    "memfs": "^4.0.0",
-    "oxlint": "^1.81.0",
+    "memfs": "^4.78.0",
+    "oxlint": "^1.83.0",
     "tsup": "^8.5.1",
     "vitest": "^1.6.1"
   },
