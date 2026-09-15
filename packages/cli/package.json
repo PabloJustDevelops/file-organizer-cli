@@ -54,23 +54,21 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "chalk": "^5.3.0",
+    "chalk": "^6.0.0",
     "chokidar": "^3.6.0",
-    "commander": "^12.0.0",
-    "conf": "^12.0.0",
+    "commander": "^15.0.0",
+    "conf": "^15.0.0",
     "figures": "^6.1.0",
     "fs-extra": "^11.2.0",
     "ink": "^7.1.1",
-    "inquirer": "^9.2.0",
-    "ora": "^8.0.0",
+    "inquirer": "^14.0.0",
     "react": "^19.3.0",
     "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@oxlint/plugins": "^1.83.0",
     "@types/fs-extra": "^11.0.0",
-    "@types/inquirer": "^9.0.0",
-    "@types/node": "^20.0.0",
+    "@types/node": "^22.0.0",
     "@types/react": "^19.3.0",
     "@vitest/coverage-v8": "^5.0.1",
     "memfs": "^4.78.0",
@@ -80,7 +78,7 @@
     "vitest": "^5.0.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.13.0"
   },
   "files": [
     "dist/**/*.js",

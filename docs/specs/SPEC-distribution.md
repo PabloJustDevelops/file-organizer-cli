@@ -155,8 +155,12 @@ Install:    npm install -g ./pablojustdevs-file-organizer-cli-<version>.tgz
   (Today 4 `*.js.map` files, ~478 KB compressed-inflating, ship by default.)
 - **OQ-4:** First public version: keep `0.1.0-rc.1` or promote to `0.1.0`?
   Default: promote to `0.1.0` on first public publish.
-- **OQ-5:** Bump `engines.node` from `>=18` (EOL) to `>=20`? Default: keep
-  `>=18` for reach, document 20 LTS as recommended.
+- **OQ-5:** ~~Bump `engines.node` from `>=18` (EOL) to `>=20`?~~ **Resolved:
+  `>=22.13.0`** ([ADR-0011](decisions/0011-node-22-baseline.md), 2026-09-15) —
+  not `>=20`: `commander@15`, `chalk@6`, `inquirer@14`, and `vitest@5` (already
+  adopted) all require Node 22, so stopping at 20 would have needed a second
+  bump within the same cycle. Node 18 is EOL and Node 20 is within one release
+  of EOL.
 
 ## 10. Changelog
 
@@ -193,3 +197,6 @@ Install:    npm install -g ./pablojustdevs-file-organizer-cli-<version>.tgz
   `docs/PLUGINS.md`, the runbook, this spec, the CHANGELOG, the tests that assert
   it, and the lockfile. The GitHub handle `PabloJustDevelops` in
   `repository`/`homepage`/`bugs`/`author` is unaffected.
+- 2026-09-15 — OQ-5 resolved: `engines.node` raised `>=18.0.0` →
+  `>=22.13.0`, authorized explicitly by the maintainer
+  ([ADR-0011](decisions/0011-node-22-baseline.md)).

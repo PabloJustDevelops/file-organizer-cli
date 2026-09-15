@@ -11,6 +11,7 @@ import { dedupCommand } from './commands/dedup.js';
 import { tuiCommand } from './commands/tui.js';
 import { mcpCommand } from './commands/mcp.js';
 import { setLogLevel, setLogFilePath } from '../utils/logger.js';
+import { loadAppConfig } from '../config/loader.js';
 
 const require = createRequire(import.meta.url);
 const { version } = require('../../package.json') as { version: string };
@@ -24,12 +25,19 @@ program
   .option('-v, --verbose', 'Enable verbose logging')
   .option('-q, --quiet', 'Only show errors')
   .option('--log-file <path>', 'Write logs to file')
-  .hook('preAction', (thisCommand) => {
+  .hook('preAction', async (thisCommand) => {
     const opts = thisCommand.opts();
     if (opts.verbose) {
       setLogLevel('debug');
     } else if (opts.quiet) {
       setLogLevel('error');
+    } else {
+      // No explicit flag: honor the persisted app config (`fo config`'s
+      // global store, not the YAML). `--json` and `fo mcp` still win — they
+      // force `setLogLevel('error')` later, inside their own action, after
+      // this hook has already run.
+      const appConfig = await loadAppConfig();
+      setLogLevel(appConfig.logLevel);
     }
     if (opts.logFile) {
       setLogFilePath(opts.logFile);

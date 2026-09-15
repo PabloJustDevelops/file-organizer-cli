@@ -9,6 +9,36 @@ and this project adheres to
 Entries are added in the same change that ships the behavior
 (see [`docs/constitution.md`](docs/constitution.md), Article III).
 
+## [Unreleased]
+
+### Changed
+
+- **`engines.node` raised from `>=18.0.0` to `>=22.13.0`** (root and
+  `packages/cli`), `@types/node` from `^20` to `^22`, and `.nvmrc` to
+  `22.13.0`. Node 18 is EOL and Node 20 is nearing EOL; `commander@15`,
+  `chalk@6`, `inquirer@14`, and `vitest@5` (already adopted) all require
+  Node 22 anyway (see
+  [ADR-0011](docs/decisions/0011-node-22-baseline.md)).
+- `chalk` 5 → 6.
+- `commander` 12 → 15.
+
+### Fixed
+
+- **`AppConfig.logLevel` now actually does something.** It existed in
+  `src/types/index.ts` and `DEFAULT_CONFIG` since the config module shipped,
+  but nothing ever called `setLogLevel(config.logLevel)`, so persisting a
+  custom level via `saveAppConfig` had no observable effect. The CLI's shared
+  `preAction` hook now applies it as the default log level whenever
+  `--verbose`/`--quiet` are not given; those flags still win when present, and
+  `--json` / `fo mcp` still force `error` afterwards inside their own action
+  (see [SPEC-config.md §3a](docs/specs/SPEC-config.md)).
+
+### Added
+
+- `.github/dependabot.yml`: weekly `npm` (covers `bun.lock`) and
+  `github-actions` update groups, capped at 5 open PRs, minor/patch grouped
+  and majors left as individual PRs for manual review.
+
 ## [0.1.0] - unreleased
 
 First public release candidate — not yet published to npm.
