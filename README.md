@@ -18,8 +18,8 @@ Rule-based file organization from the terminal. Define patterns in YAML — `fo`
 
 ## Requirements
 
-- **Node.js >= 18** (20 LTS recommended). This installs the `fo`,
-  `file-organizer`, and `fo-tui` binaries.
+- **Node.js >= 22.13.0**. This installs the `fo`, `file-organizer`, and
+  `fo-tui` binaries.
 
 ## Installation
 
@@ -35,9 +35,8 @@ npx @pablojustdevs/file-organizer-cli --help
 
 **From source (development):**
 
-Requires Node.js 22.12+ locally (see `.nvmrc`) — the test suite runs on
-Vitest 5, which needs that Node baseline; this does not affect the published
-package's `engines.node` (`>=18`).
+Requires Node.js 22.13+ locally (see `.nvmrc`), matching the published
+package's `engines.node` (`>=22.13.0`, [ADR-0011](docs/decisions/0011-node-22-baseline.md)).
 
 ```bash
 git clone https://github.com/PabloJustDevelops/file-organizer-cli

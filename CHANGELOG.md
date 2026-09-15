@@ -9,6 +9,17 @@ and this project adheres to
 Entries are added in the same change that ships the behavior
 (see [`docs/constitution.md`](docs/constitution.md), Article III).
 
+## [Unreleased]
+
+### Changed
+
+- **`engines.node` raised from `>=18.0.0` to `>=22.13.0`** (root and
+  `packages/cli`), `@types/node` from `^20` to `^22`, and `.nvmrc` to
+  `22.13.0`. Node 18 is EOL and Node 20 is nearing EOL; `commander@15`,
+  `chalk@6`, `inquirer@14`, and `vitest@5` (already adopted) all require
+  Node 22 anyway (see
+  [ADR-0011](docs/decisions/0011-node-22-baseline.md)).
+
 ## [0.1.0] - unreleased
 
 First public release candidate — not yet published to npm.

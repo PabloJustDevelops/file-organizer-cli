@@ -6,10 +6,9 @@ please read this before opening a pull request.
 ## Prerequisites
 
 - [Bun](https://bun.sh) — package manager and script runner
-- Node.js >= 18 (20 LTS recommended) — to run the built CLI
-- Node.js 22.12+ for the development environment (see `.nvmrc`) — Vitest 5
-  (`packages/cli`'s test runner) requires it. This is separate from the
-  published package's `engines.node` (`>=18`), which targets end users.
+- Node.js >= 22.13.0 (see `.nvmrc`) — matches the published package's
+  `engines.node` ([ADR-0011](docs/decisions/0011-node-22-baseline.md)); also
+  the floor Vitest 5 (`packages/cli`'s test runner) requires.
 
 ## Setup
 

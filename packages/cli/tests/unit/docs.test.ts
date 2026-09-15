@@ -35,7 +35,7 @@ describe('adoption docs', () => {
   it('AC-1/AC-3/AC-5: README documents requirements, scripting, and troubleshooting', () => {
     const readme = read('README.md');
     expect(readme).toContain('## Requirements');
-    expect(readme).toContain('Node.js >= 18');
+    expect(readme).toContain('Node.js >= 22.13.0');
     expect(readme).toContain('### Machine-readable output');
     expect(readme).toContain('## Troubleshooting');
   });
