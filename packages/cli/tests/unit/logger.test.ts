@@ -85,6 +85,34 @@ describe('logger', () => {
       expect(firstArgOf('error')).toContain('[ERROR] an error');
     });
 
+    it('suppresses success at the warn level (success shares info\'s threshold)', async () => {
+      const logger = await freshLogger();
+      logger.setLogLevel('warn');
+
+      logger.success('should be hidden');
+
+      expect(callsOn('log')).toBe(0);
+    });
+
+    it('silences every level, including error, when the configured level is unrecognized', async () => {
+      const logger = await freshLogger();
+      // Defensive branch: `shouldLog` compares `LOG_LEVELS[level] >= LOG_LEVELS[currentLogLevel]`.
+      // `error` (3) is the highest real level, so that comparison is only ever
+      // false when `currentLogLevel` itself is not a key of `LOG_LEVELS` —
+      // `setLogLevel` is typed to `LogLevel`, so reaching that state requires
+      // bypassing the type (e.g. config read from untrusted YAML/JSON).
+      logger.setLogLevel('critical' as unknown as LogLevel);
+
+      logger.debug('m');
+      logger.info('m');
+      logger.warn('m');
+      logger.error('m');
+
+      expect(callsOn('log')).toBe(0);
+      expect(callsOn('warn')).toBe(0);
+      expect(callsOn('error')).toBe(0);
+    });
+
     it.each([
       ['error', ['debug', 'info', 'warn'] as LogLevel[], ['error'] as LogLevel[]],
       ['warn', ['debug', 'info'] as LogLevel[], ['warn', 'error'] as LogLevel[]],
@@ -165,6 +193,22 @@ describe('logger', () => {
 
       expect(() => logger.info('console only')).not.toThrow();
       expect(callsOn('log')).toBe(1);
+      expect(fs.existsSync(logFile)).toBe(false);
+    });
+
+    it('does not write success lines to the file when no path is configured', async () => {
+      const logger = await freshLogger();
+
+      expect(() => logger.success('console only')).not.toThrow();
+      expect(callsOn('log')).toBe(1);
+      expect(fs.existsSync(logFile)).toBe(false);
+    });
+
+    it('does not write error lines to the file when no path is configured', async () => {
+      const logger = await freshLogger();
+
+      expect(() => logger.error('console only')).not.toThrow();
+      expect(callsOn('error')).toBe(1);
       expect(fs.existsSync(logFile)).toBe(false);
     });
 

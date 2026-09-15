@@ -35,6 +35,10 @@ npx @pablojustdevs/file-organizer-cli --help
 
 **From source (development):**
 
+Requires Node.js 22.12+ locally (see `.nvmrc`) — the test suite runs on
+Vitest 5, which needs that Node baseline; this does not affect the published
+package's `engines.node` (`>=18`).
+
 ```bash
 git clone https://github.com/PabloJustDevelops/file-organizer-cli
 cd file-organizer-cli

@@ -99,6 +99,20 @@ describe('undo', () => {
     expect(await fs.pathExists(to)).toBe(false);
   });
 
+  it('restores the last operation when the prompt is confirmed (no --yes)', async () => {
+    const { from, to } = seedUndoableMove();
+    confirmActionMock.mockResolvedValue(true);
+    const command = await loadUndoCommand();
+
+    await runCommand(command, []);
+
+    expect(confirmActionMock).toHaveBeenCalled();
+    expect(process.exitCode).toBe(0);
+    expect(ctx.text()).toContain('Undo complete: 1 files restored');
+    expect(await fs.pathExists(from)).toBe(true);
+    expect(await fs.pathExists(to)).toBe(false);
+  });
+
   it('does nothing when the confirmation is declined', async () => {
     const { from } = seedUndoableMove();
     confirmActionMock.mockResolvedValue(false);

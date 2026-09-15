@@ -95,6 +95,47 @@ describe('RulesEngine', () => {
   });
 
   describe('Rule ordering', () => {
+    it('sorts rules by priority when passed directly to the constructor', () => {
+      const constructed = new RulesEngine([
+        { name: 'Low priority', patterns: ['*.jpg'], destination: './low', priority: 0 },
+        { name: 'High priority', patterns: ['*.jpg'], destination: './high', priority: 10 },
+      ]);
+
+      expect(constructed.getRules().map((r) => r.name)).toEqual([
+        'High priority',
+        'Low priority',
+      ]);
+    });
+
+    it('defaults a missing priority to 0 when sorting rules passed to the constructor', () => {
+      const constructed = new RulesEngine([
+        { name: 'No priority', patterns: ['*.jpg'], destination: './default' },
+        { name: 'High priority', patterns: ['*.jpg'], destination: './high', priority: 10 },
+      ]);
+
+      expect(constructed.getRules().map((r) => r.name)).toEqual([
+        'High priority',
+        'No priority',
+      ]);
+    });
+
+    it('defaults a missing priority to 0 on both sides of the comparator (constructor, 3+ rules)', () => {
+      // Three rules force the sort comparator to run with every pairing —
+      // regardless of which argument order the engine picks, both the "a"
+      // and "b" side of `?? 0` are exercised by at least one comparison.
+      const constructed = new RulesEngine([
+        { name: 'High priority', patterns: ['*.jpg'], destination: './high', priority: 10 },
+        { name: 'No priority A', patterns: ['*.jpg'], destination: './a' },
+        { name: 'No priority B', patterns: ['*.jpg'], destination: './b' },
+      ]);
+
+      expect(constructed.getRules().map((r) => r.name)).toEqual([
+        'High priority',
+        'No priority A',
+        'No priority B',
+      ]);
+    });
+
     it('sorts mixed explicit and default priorities without dropping rules', () => {
       engine.addRule({ name: 'NoPrioA', patterns: ['*.txt'], destination: './a' });
       engine.addRule({ name: 'NoPrioB', patterns: ['*.txt'], destination: './b' });

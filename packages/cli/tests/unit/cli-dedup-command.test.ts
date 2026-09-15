@@ -141,6 +141,20 @@ describe('dedup', () => {
     expect(process.exitCode).toBe(1);
     expect(ctx.text()).toContain('Dedup failed:');
   });
+
+  it('does not report same-size files as duplicates when their content differs', async () => {
+    // Same byte length, different bytes: groups by size first, but the
+    // per-hash bucket for each file ends up with only one entry — the
+    // "dupes.length >= 2" branch that pushes a group must stay false here.
+    writeFixture(ctx.dir, 'a.txt', 'aaaa');
+    writeFixture(ctx.dir, 'b.txt', 'bbbb');
+    const command = await loadDedupCommand();
+
+    await runCommand(command, [ctx.dir]);
+
+    expect(process.exitCode).toBe(0);
+    expect(ctx.text()).toContain('No duplicates found.');
+  });
 });
 
 describe('dedup with a failing backup store', () => {

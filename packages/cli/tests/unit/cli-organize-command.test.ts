@@ -155,6 +155,18 @@ describe('organize', () => {
     expect(process.exitCode).toBe(0);
   });
 
+  it('applies a small real run without prompting (below the confirmation threshold)', async () => {
+    const configPath = writeConfig(ctx.dir, { rules: [images] });
+    seedPhotos(2);
+    const command = await loadOrganizeCommand();
+
+    await runCommand(command, [ctx.dir, '-c', configPath]);
+
+    expect(confirmActionMock).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(0);
+    expect(await fs.pathExists(path.join(ctx.dir, 'images', 'photo-0.jpg'))).toBe(true);
+  });
+
   it('confirms a large run, then applies it', async () => {
     const configPath = writeConfig(ctx.dir, { rules: [images] });
     seedPhotos(20);
