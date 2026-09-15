@@ -68,7 +68,7 @@
   "devDependencies": {
     "@oxlint/plugins": "^1.83.0",
     "@types/fs-extra": "^11.0.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.5.1",
     "@types/react": "^19.3.0",
     "@vitest/coverage-v8": "^5.0.1",
     "memfs": "^4.78.0",
