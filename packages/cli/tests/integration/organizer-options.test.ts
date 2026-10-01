@@ -14,10 +14,21 @@ describe('Organizer options API', () => {
     { name: 'Images', patterns: ['*.jpg'], destination: './{monthName}' },
   ];
 
+  // Pin the fixture's mtime to a fixed local date. `{monthName}` is resolved from
+  // the file's mtime, so without this the expected month would depend on the day the
+  // suite runs (it stopped passing in any month other than September). Convention
+  // copied from tests/unit/template-variables.test.ts: a date-time string without a
+  // timezone is parsed in the runner's local time, so the month is stable on every
+  // OS in the CI matrix (ubuntu-24.04 / windows-latest / macos-latest).
+  const FIXED_MTIME = new Date('2024-09-15T10:00:00');
+
   beforeEach(async () => {
     testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'fo-opts-'));
     historyDir = await fs.mkdtemp(path.join(os.tmpdir(), 'fo-opts-h-'));
-    await fs.writeFile(path.join(testDir, 'photo.jpg'), 'x');
+    const photoPath = path.join(testDir, 'photo.jpg');
+    await fs.writeFile(photoPath, 'x');
+    // Force a deterministic mtime so the September assertion is not date-dependent.
+    await fs.utimes(photoPath, FIXED_MTIME, FIXED_MTIME);
   });
 
   afterEach(async () => {
