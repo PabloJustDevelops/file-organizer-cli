@@ -1,36 +1,103 @@
 name: CI
 
+# Una sola tubería para todo el repositorio.
+#
+# Antes había dos workflows solapados (`ci.yml` y `test.yml`) que ejecutaban
+# lint + pruebas + cobertura + build dos veces sobre ubuntu y, en cambio, no
+# probaban Windows ni macOS de forma fiable: el job de Linux fallaba primero y
+# `fail-fast` cancelaba los otros dos, así que el rojo ocultaba el resto.
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
 
+# Un push nuevo sobre la misma ref cancela la ejecución anterior en curso.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Bun fijado: con `latest`, la resolución del lockfile cambia entre
+  # ejecuciones sin que nadie toque el repo. Misma versión que desarrollo.
+  BUN_VERSION: "1.4.2"
+
 jobs:
-  cli:
+  # ---------------------------------------------------------------------------
+  # Canónico (Linux): lint + tipos, pruebas, cobertura y build publicable.
+  # Es la única puerta de release del repo.
+  # ---------------------------------------------------------------------------
+  verify:
+    # El nombre es el contexto del check y el ruleset de `main` lo exige: si
+    # cambia, hay que actualizar el ruleset o ningún PR vuelve a poder mergearse.
     name: CLI — lint, test, build
     runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: packages/cli
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Install dependencies
-        run: bun install
-        working-directory: .
+      # `--frozen-lockfile`: si el lockfile no cuadra con los manifests, el job
+      # debe fallar, no resolver versiones nuevas por su cuenta.
+      - name: Instalar dependencias
+        run: bun install --frozen-lockfile
 
-      - name: Lint
+      # `lint` es `oxlint && tsc --noEmit`: el typecheck es parte del lint.
+      - name: Lint y tipos
         run: bun run lint
+        working-directory: packages/cli
 
-      - name: Test
+      - name: Pruebas
         run: bun run test
+        working-directory: packages/cli
 
-      - name: Coverage gate
+      - name: Cobertura
         run: bun run test:coverage
+        working-directory: packages/cli
 
       - name: Build
         run: bun run build
+        working-directory: packages/cli
+
+      - name: Subir cobertura
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: packages/cli/coverage/
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Portabilidad: la CLI mueve ficheros y trata rutas, así que Windows y macOS
+  # se prueban de verdad. `fail-fast: false` para tener los tres veredictos en
+  # la misma ejecución en vez de cancelarse entre sí.
+  # ---------------------------------------------------------------------------
+  portability:
+    name: Portabilidad · ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Instalar dependencias
+        run: bun install --frozen-lockfile
+
+      - name: Pruebas
+        run: bun run test
+        working-directory: packages/cli
+
+      - name: Build
+        run: bun run build
+        working-directory: packages/cli
