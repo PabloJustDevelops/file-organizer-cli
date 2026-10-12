@@ -50,31 +50,39 @@ describe('npm tarball (distribution)', () => {
     buildIfNeeded();
   }, 300_000);
 
-  it('AC-5: ships dist + README + LICENSE; excludes src, tests, tools, and sourcemaps', () => {
-    const paths = packedFilePaths();
+  // Timeout explícito: el test lanza `npm pack` (el CLI de npm tarda >20 s en
+  // frío en Windows, que es el timeout por defecto de vitest) y ese es el único
+  // motivo del fallo: pasó en verde y rojo con el mismo código. Se paga por
+  // arrancar un proceso, no por lo que se comprueba.
+  it(
+    'AC-5: ships dist + README + LICENSE; excludes src, tests, tools, and sourcemaps',
+    () => {
+      const paths = packedFilePaths();
 
-    const required = [
-      'dist/cli/index.js',
-      'dist/mcp/index.js',
-      'dist/mcp/server.js',
-      'dist/tui/index.js',
-      'dist/index.js',
-      'dist/index.d.ts',
-      'package.json',
-      'README.md',
-      'LICENSE',
-    ];
-    for (const entry of required) {
-      expect(paths, `tarball is missing ${entry}`).toContain(entry);
-    }
+      const required = [
+        'dist/cli/index.js',
+        'dist/mcp/index.js',
+        'dist/mcp/server.js',
+        'dist/tui/index.js',
+        'dist/index.js',
+        'dist/index.d.ts',
+        'package.json',
+        'README.md',
+        'LICENSE',
+      ];
+      for (const entry of required) {
+        expect(paths, `tarball is missing ${entry}`).toContain(entry);
+      }
 
-    const forbiddenPrefixes = ['src/', 'tests/', 'tools/'];
-    for (const filePath of paths) {
-      expect(
-        forbiddenPrefixes.some((prefix) => filePath.startsWith(prefix)),
-        `tarball must not contain ${filePath}`
-      ).toBe(false);
-      expect(filePath.endsWith('.map'), `tarball must not contain ${filePath}`).toBe(false);
-    }
-  });
+      const forbiddenPrefixes = ['src/', 'tests/', 'tools/'];
+      for (const filePath of paths) {
+        expect(
+          forbiddenPrefixes.some((prefix) => filePath.startsWith(prefix)),
+          `tarball must not contain ${filePath}`
+        ).toBe(false);
+        expect(filePath.endsWith('.map'), `tarball must not contain ${filePath}`).toBe(false);
+      }
+    },
+    120_000
+  );
 });
