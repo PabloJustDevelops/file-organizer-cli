@@ -131,7 +131,10 @@ export class FolderWatcher {
         .on('add', () => this.scheduleOrganize())
         .on('change', () => this.scheduleOrganize())
         .on('unlink', () => this.scheduleOrganize())
-        .on('error', (err) => logger.error(`[watch] Watcher error: ${err.message}`))
+        // `err` es `unknown` con los tipos estrictos de chokidar 4/5 y con
+        // `useUnknownInCatchVariables`: el helper ya existente es la única
+        // forma de leer el mensaje sin romper el typecheck.
+        .on('error', (err) => logger.error(`[watch] Watcher error: ${errorMessage(err)}`))
         .on('ready', () => {
           logger.success(`[watch] Watching: ${this.sourceDir}`);
           // Realize the initial pass that `--no-initial` disables.
