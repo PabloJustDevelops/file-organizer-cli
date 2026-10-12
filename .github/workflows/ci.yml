@@ -30,7 +30,9 @@ jobs:
   # Es la única puerta de release del repo.
   # ---------------------------------------------------------------------------
   verify:
-    name: CLI · lint, pruebas, cobertura y build
+    # El nombre es el contexto del check y el ruleset de `main` lo exige: si
+    # cambia, hay que actualizar el ruleset o ningún PR vuelve a poder mergearse.
+    name: CLI — lint, test, build
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
