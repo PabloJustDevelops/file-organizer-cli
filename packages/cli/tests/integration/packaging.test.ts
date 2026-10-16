@@ -38,7 +38,11 @@ function packedFilePaths(): string[] {
     encoding: 'utf-8',
     stdio: ['ignore', 'pipe', 'ignore'],
   });
-  const results = JSON.parse(stdout) as PackResult[];
+  // npm <= 11 devuelve un array de resultados; npm 12 lo devuelve indexado por
+  // nombre de paquete. El guard no debe depender de la versión de npm que haya
+  // en la máquina o en el runner, así que se aceptan las dos formas.
+  const parsed = JSON.parse(stdout) as PackResult[] | Record<string, PackResult>;
+  const results = Array.isArray(parsed) ? parsed : Object.values(parsed);
   if (results.length === 0) {
     throw new Error('npm pack --dry-run --json returned no result');
   }
