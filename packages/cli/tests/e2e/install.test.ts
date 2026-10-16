@@ -62,10 +62,14 @@ describe('tarball install smoke (e2e)', () => {
     );
   }, 300_000);
 
+  // Timeout explícito: en Windows borrar el prefijo temporal con el paquete
+  // instalado dentro (`rmSync` recursivo) tarda más de los 10 s que vitest da por
+  // defecto a los hooks, y el job moría con "Hook timed out in 10000ms" aunque el
+  // test hubiera pasado.
   afterAll(() => {
     if (tarball) fs.rmSync(path.join(packageDir, tarball), { force: true });
     if (prefix) removeDir(prefix);
-  });
+  }, 120_000);
 
   it('AC-9: installed package exposes its bins and runs', () => {
     const binDir = firstExisting([path.join(prefix, 'bin'), prefix]) ?? prefix;
