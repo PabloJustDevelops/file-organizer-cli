@@ -12,6 +12,14 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    # `typescript` >= 7 no se puede subir todavía (issue #32): la 7 es el
+    # compilador nativo y no publica la API del compilador, que necesita el paso
+    # DTS del build (`rollup-plugin-dts`). Quitar este ignore cuando el DTS deje
+    # de necesitarla (tsup/rollup-plugin-dts leyendo `@typescript/typescript6`, o
+    # un DTS propio con `tsc --emitDeclarationOnly`).
+    ignore:
+      - dependency-name: "typescript"
+        versions: [">= 7.0.0"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
